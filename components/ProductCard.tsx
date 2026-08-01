@@ -7,9 +7,11 @@ import { motion } from "framer-motion";
 import { Product } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCart } from "@/context/CartContext";
 
 export default function ProductCard({ product }: { product: Product }) {
   const { locale } = useLanguage();
+  const { addToCart } = useCart();
 
   return (
     <motion.div
@@ -31,7 +33,10 @@ export default function ProductCard({ product }: { product: Product }) {
         <Heart size={16} />
       </button>
 
-      <button className="absolute bottom-3 left-3 bg-gold text-black rounded-md p-2 shadow">
+      <button
+        onClick={() => addToCart(product)}
+        className="absolute bottom-3 left-3 bg-gold text-black rounded-md p-2 shadow"
+      >
         <ShoppingCart size={16} />
       </button>
 
