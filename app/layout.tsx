@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { CartProvider } from "@/context/CartContext";
 
 export const metadata: Metadata = {
   title: "MY BRAND | Home Furniture",
@@ -19,10 +20,12 @@ export default function RootLayout({
     <html lang="tr" dir="ltr">
       <body className="bg-base-white text-base-black pb-20 md:pb-0">
         <LanguageProvider>
-          <Header />
-          <main>{children}</main>
-          <Footer />
-          <MobileBottomNav />
+          <CartProvider>
+            <Header />
+            <main>{children}</main>
+            <Footer />
+            <MobileBottomNav />
+          </CartProvider>
         </LanguageProvider>
       </body>
     </html>
