@@ -1,13 +1,14 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
 import { formatPrice } from "@/lib/utils";
 import { X } from "lucide-react";
 
 export default function CartPage() {
-  const { locale, t } = useLanguage();
+  const { locale } = useLanguage();
   const { items, removeFromCart } = useCart();
 
   const total = items.reduce(
@@ -71,6 +72,13 @@ export default function CartPage() {
           {formatPrice(total, locale)} {locale === "tr" ? "₺" : "TRY"}
         </span>
       </div>
+
+      <Link
+        href="/checkout"
+        className="block w-full bg-black text-gold text-center py-3 rounded-md font-bold"
+      >
+        {locale === "tr" ? "Ödemeye Geç" : "Go to Checkout"}
+      </Link>
     </section>
   );
 }
