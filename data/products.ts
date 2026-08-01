@@ -1,0 +1,108 @@
+import { Product } from "@/types";
+
+export const products: Product[] = [
+  {
+    id: "1",
+    slug: "zenith-sofa-set",
+    name: { tr: "Zenith Koltuk Takımı", en: "Zenith Sofa Set" },
+    category: { tr: "Koltuk Takımı", en: "Sofa Set" },
+    priceMin: 45000,
+    priceMax: 58000,
+    image: "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=800",
+    description: {
+      tr: "Modern tasarım ve kaliteli kumaşla üretilmiş konforlu koltuk takımı.",
+      en: "Comfortable sofa set crafted with modern design and premium fabric.",
+    },
+  },
+  {
+    id: "2",
+    slug: "bohem-sofa-set",
+    name: { tr: "Bohem Koltuk Takımı", en: "Bohem Sofa Set" },
+    category: { tr: "Koltuk Takımı", en: "Sofa Set" },
+    priceMin: 45000,
+    priceMax: 58000,
+    image: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800",
+    description: {
+      tr: "Sıcak ve samimi tasarım, ahşap ayaklar ve renkli yastıklar.",
+      en: "Warm and cozy design with wooden legs and colorful cushions.",
+    },
+  },
+  {
+    id: "3",
+    slug: "lumiera-sofa-set",
+    name: { tr: "Lumiera Koltuk Takımı", en: "Lumiera Sofa Set" },
+    category: { tr: "Koltuk Takımı", en: "Sofa Set" },
+    priceMin: 54000,
+    priceMax: 61000,
+    image: "https://images.unsplash.com/photo-1550254478-ead40cc54513?w=800",
+    description: {
+      tr: "Toprak tonları ve ince metal ayaklarla şık bir kombinasyon.",
+      en: "A stylish combination of earth tones and slim metal legs.",
+    },
+  },
+  {
+    id: "4",
+    slug: "valens-sofa-set",
+    name: { tr: "Valens Koltuk Takımı", en: "Valens Sofa Set" },
+    category: { tr: "Koltuk Takımı", en: "Sofa Set" },
+    priceMin: 51000,
+    priceMax: 58000,
+    image: "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=800",
+    description: {
+      tr: "Minimal tasarım, rahat minderler ve bej kumaş.",
+      en: "Minimal design with comfortable cushions and beige fabric.",
+    },
+  },
+  {
+    id: "5",
+    slug: "zeus-corner-set",
+    name: { tr: "Zeus Köşe Takımı", en: "Zeus Corner Set" },
+    category: { tr: "Köşe Takımı", en: "Corner Set" },
+    priceMin: 52000,
+    priceMax: 59990,
+    image: "https://images.unsplash.com/photo-1567016432779-094069958ea5?w=800",
+    description: {
+      tr: "Aile alanları için büyük köşe kanepe.",
+      en: "Large corner sofa ideal for family spaces.",
+    },
+  },
+  {
+    id: "6",
+    slug: "noir-bed",
+    name: { tr: "Noir Yatak", en: "Noir Bed" },
+    category: { tr: "Yatak Odası", en: "Bedroom" },
+    priceMin: 32000,
+    priceMax: 41000,
+    image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800",
+    description: {
+      tr: "Depolama çekmeceli ve gizli aydınlatmalı yatak.",
+      en: "Bed with storage drawer and hidden lighting.",
+    },
+  },
+  {
+    id: "7",
+    slug: "orion-dining-table",
+    name: { tr: "Orion Yemek Masası", en: "Orion Dining Table" },
+    category: { tr: "Yemek Odası", en: "Dining Room" },
+    priceMin: 18000,
+    priceMax: 24000,
+    image: "https://images.unsplash.com/photo-1617104678098-de229db51175?w=800",
+    description: {
+      tr: "Suni mermer kaplamalı ahşap yemek masası.",
+      en: "Wooden dining table with faux marble finish.",
+    },
+  },
+  {
+    id: "8",
+    slug: "atlas-tv-unit",
+    name: { tr: "Atlas TV Ünitesi", en: "Atlas TV Unit" },
+    category: { tr: "TV Ünitesi", en: "TV Unit" },
+    priceMin: 12000,
+    priceMax: 16000,
+    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800",
+    description: {
+      tr: "İç depolama alanına sahip modern TV ünitesi.",
+      en: "Modern TV unit with internal storage space.",
+    },
+  },
+];
