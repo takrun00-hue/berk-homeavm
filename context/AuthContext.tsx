@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { dictionary } from "@/lib/i18n";
 
 interface User {
   name: string;
@@ -43,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(data.user);
       return null;
     }
-    return data.message || "Giris basarisiz.";
+    return data.message || null;
   };
 
   const register = async (name: string, email: string, password: string) => {
@@ -57,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(data.user);
       return null;
     }
-    return data.message || "Kayit basarisiz.";
+    return data.message || null;
   };
 
   const logout = async () => {
