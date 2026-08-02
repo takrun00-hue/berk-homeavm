@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
 import { formatPrice } from "@/lib/utils";
-import { X } from "lucide-react";
+import { X, Plus, Minus } from "lucide-react";
 
 export default function CartPage() {
   const { locale } = useLanguage();
-  const { items, removeFromCart } = useCart();
+  const { items, removeFromCart, increaseQuantity, decreaseQuantity } =
+    useCart();
 
   const total = items.reduce(
     (sum, i) => sum + i.product.priceMin * i.quantity,
@@ -51,13 +52,28 @@ export default function CartPage() {
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-sm">{product.name[locale]}</h3>
-              <p className="text-gray-400 text-xs">
-                {locale === "tr" ? "Adet" : "Qty"}: {quantity}
-              </p>
-              <p className="text-gold font-bold text-sm">
+              <p className="text-gold font-bold text-sm mt-1">
                 {formatPrice(product.priceMin, locale)}{" "}
                 {locale === "tr" ? "₺" : "TRY"}
               </p>
+
+              <div className="flex items-center gap-3 mt-2">
+                <button
+                  onClick={() => decreaseQuantity(product.id)}
+                  className="w-7 h-7 flex items-center justify-center border rounded-md"
+                >
+                  <Minus size={14} />
+                </button>
+                <span className="text-sm font-bold w-4 text-center">
+                  {quantity}
+                </span>
+                <button
+                  onClick={() => increaseQuantity(product.id)}
+                  className="w-7 h-7 flex items-center justify-center border rounded-md"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
             </div>
             <button onClick={() => removeFromCart(product.id)}>
               <X size={18} className="text-gray-400" />
