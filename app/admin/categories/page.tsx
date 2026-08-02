@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import AdminNav from "@/components/AdminNav";
 
 interface Cat {
   id: number;
@@ -57,12 +57,8 @@ export default function AdminCategoriesPage() {
 
   return (
     <section className="py-10 px-4 max-w-md mx-auto space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-xl font-extrabold">Kategoriler</h1>
-        <Link href="/admin/products" className="text-xs text-gold underline">
-          Ürünler →
-        </Link>
-      </div>
+      <h1 className="text-xl font-extrabold">Kategoriler</h1>
+      <AdminNav />
 
       <form onSubmit={handleAdd} className="space-y-2 border rounded-md p-3">
         <input
