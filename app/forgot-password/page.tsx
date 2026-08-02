@@ -7,7 +7,7 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { locale } = useLanguage();
+  const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,14 +26,12 @@ export default function ForgotPasswordPage() {
   return (
     <section className="py-16 px-4 max-w-sm mx-auto space-y-4">
       <h1 className="text-2xl font-extrabold text-center">
-        {locale === "tr" ? "Şifremi Unuttum" : "Forgot Password"}
+        {t("forgotPasswordTitle")}
       </h1>
 
       {sent ? (
         <p className="text-sm text-gray-600 text-center">
-          {locale === "tr"
-            ? "Eğer bu email kayıtlıysa, sıfırlama linki gönderildi. Lütfen gelen kutunuzu kontrol edin."
-            : "If this email is registered, a reset link has been sent. Please check your inbox."}
+          {t("resetLinkSent")}
         </p>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -50,11 +48,7 @@ export default function ForgotPasswordPage() {
             disabled={loading}
             className="w-full bg-black text-gold py-3 rounded-md font-bold disabled:opacity-50"
           >
-            {loading
-              ? "..."
-              : locale === "tr"
-              ? "Sıfırlama Linki Gönder"
-              : "Send Reset Link"}
+            {loading ? "..." : t("sendResetLink")}
           </button>
         </form>
       )}
