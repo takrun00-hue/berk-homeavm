@@ -19,7 +19,7 @@ export default function AdminLoginPage() {
     });
 
     if (res.ok) {
-      router.push("/admin/upload");
+      router.push("/admin/products");
     } else {
       setError("Şifre yanlış.");
     }
