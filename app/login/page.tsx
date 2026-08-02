@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -11,41 +12,28 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const { login, register } = useAuth();
   const { locale } = useLanguage();
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    if (tab === "login") {
-      const ok = login(email, password);
-      if (ok) {
-        router.push("/account");
-      } else {
-        setError(
-          locale === "tr"
-            ? "Email veya şifre hatalı."
-            : "Incorrect email or password."
-        );
-      }
+    const errMsg =
+      tab === "login"
+        ? await login(email, password)
+        : await register(name, email, password);
+
+    setLoading(false);
+
+    if (errMsg) {
+      setError(errMsg);
     } else {
-      if (!name || !email || !password) {
-        setError(locale === "tr" ? "Tüm alanları doldurun." : "Fill all fields.");
-        return;
-      }
-      const ok = register(name, email, password);
-      if (ok) {
-        router.push("/account");
-      } else {
-        setError(
-          locale === "tr"
-            ? "Bu email zaten kayıtlı."
-            : "This email is already registered."
-        );
-      }
+      router.push("/account");
     }
   };
 
@@ -102,13 +90,27 @@ export default function LoginPage() {
           className="w-full border rounded-md px-4 py-3 text-sm"
         />
 
+        {tab === "login" && (
+          <div className="text-left">
+            <Link
+              href="/forgot-password"
+              className="text-xs text-gray-500 underline"
+            >
+              {locale === "tr" ? "Şifremi unuttum" : "Forgot password?"}
+            </Link>
+          </div>
+        )}
+
         {error && <p className="text-red-500 text-xs">{error}</p>}
 
         <button
           type="submit"
-          className="w-full bg-black text-gold py-3 rounded-md font-bold mt-2"
+          disabled={loading}
+          className="w-full bg-black text-gold py-3 rounded-md font-bold mt-2 disabled:opacity-50"
         >
-          {tab === "login"
+          {loading
+            ? "..."
+            : tab === "login"
             ? locale === "tr"
               ? "Giriş Yap"
               : "Login"
