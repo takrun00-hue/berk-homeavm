@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function ContactPage() {
-  const { t, locale } = useLanguage();
+  const { t } = useLanguage();
   const [form, setForm] = useState({ name: "", phone: "", message: "" });
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -38,9 +38,7 @@ export default function ContactPage() {
 
       {sent ? (
         <p className="text-sm text-green-600 text-center">
-          {locale === "tr"
-            ? "Mesajınız gönderildi. En kısa sürede size dönüş yapacağız."
-            : "Your message has been sent. We will get back to you soon."}
+          {t("contactSent")}
         </p>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
