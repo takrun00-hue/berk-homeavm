@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(req: NextRequest) {
-  const protectedPaths = ["/admin/upload", "/admin/products", "/admin/categories"];
+  const protectedPaths = [
+    "/admin/upload",
+    "/admin/products",
+    "/admin/categories",
+    "/admin/settings",
+  ];
   const isProtected = protectedPaths.some((p) =>
     req.nextUrl.pathname.startsWith(p)
   );
@@ -17,5 +22,10 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/upload/:path*", "/admin/products/:path*", "/admin/categories/:path*"],
+  matcher: [
+    "/admin/upload/:path*",
+    "/admin/products/:path*",
+    "/admin/categories/:path*",
+    "/admin/settings/:path*",
+  ],
 };
