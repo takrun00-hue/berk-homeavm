@@ -11,11 +11,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<string | null>;
-  register: (
-    name: string,
-    email: string,
-    password: string
-  ) => Promise<string | null>;
+  register: (name: string, email: string, password: string) => Promise<string | null>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -47,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(data.user);
       return null;
     }
-    return data.message || "Giriş başarısız.";
+    return data.message || "Giris basarisiz.";
   };
 
   const register = async (name: string, email: string, password: string) => {
@@ -61,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(data.user);
       return null;
     }
-    return data.message || "Kayıt başarısız.";
+    return data.message || "Kayit basarisiz.";
   };
 
   const logout = async () => {
@@ -70,9 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider
-      value={{ user, loading, login, register, logout, refreshUser }}
-    >
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
