@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { Search, Heart, User, Shuffle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { categories } from "@/data/categories";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCategories } from "@/lib/useCategories";
 
 export default function HamburgerMenu({
   open,
@@ -16,6 +16,7 @@ export default function HamburgerMenu({
 }) {
   const [tab, setTab] = useState<"menu" | "categories">("menu");
   const { locale, t } = useLanguage();
+  const { categories } = useCategories();
 
   const menuItems = [
     { label: t("home"), href: "/" },
@@ -101,9 +102,13 @@ export default function HamburgerMenu({
                   </span>
                 </li>
                 <li className="border-b">
-                  <span className="flex items-center gap-2 px-4 py-4 font-bold text-sm">
+                  <Link
+                    href="/login"
+                    onClick={onClose}
+                    className="flex items-center gap-2 px-4 py-4 font-bold text-sm"
+                  >
                     <User size={16} /> {t("login")}
-                  </span>
+                  </Link>
                 </li>
               </ul>
             ) : (
@@ -111,7 +116,7 @@ export default function HamburgerMenu({
                 {categories.map((cat) => (
                   <li key={cat.id} className="border-b">
                     <Link
-                      href={`/products?category=${cat.slug}`}
+                      href={`/products?category=${cat.name.tr}`}
                       onClick={onClose}
                       className="block px-4 py-4 font-bold text-sm"
                     >
