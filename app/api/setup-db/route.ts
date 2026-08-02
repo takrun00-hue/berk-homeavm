@@ -3,7 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const key = req.nextUrl.searchParams.get("key");
-  if (key !== process.env.ADMIN_PASSWORD) {
+  const expected = (process.env.ADMIN_PASSWORD || "").trim();
+
+  if (key !== expected) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -61,7 +63,6 @@ export async function GET(req: NextRequest) {
     )
   `;
 
-  // seed categories (only if table is empty)
   const catCount = await pool.sql`SELECT COUNT(*) FROM categories`;
   if (Number(catCount.rows[0].count) === 0) {
     await pool.sql`
@@ -75,7 +76,6 @@ export async function GET(req: NextRequest) {
     `;
   }
 
-  // seed products (only if table is empty)
   const prodCount = await pool.sql`SELECT COUNT(*) FROM products`;
   if (Number(prodCount.rows[0].count) === 0) {
     await pool.sql`
