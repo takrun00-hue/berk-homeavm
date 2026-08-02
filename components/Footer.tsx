@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { Home, MapPin, Phone, Mail } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { useSettings } from "@/lib/useSettings";
 
 export default function Footer() {
   const { t } = useLanguage();
+  const { settings } = useSettings();
 
   return (
     <footer className="bg-black text-white pt-10 pb-6 px-4">
@@ -30,15 +32,15 @@ export default function Footer() {
         <div className="space-y-2 text-sm text-gray-300 mt-4">
           <div className="flex items-center justify-center gap-2">
             <MapPin size={16} />
-            <span>{t("address")}</span>
+            <span>{settings.contact_address || "-"}</span>
           </div>
           <div className="flex items-center justify-center gap-2">
             <Phone size={16} />
-            <span dir="ltr">+90 000 000 0000</span>
+            <span dir="ltr">{settings.contact_phone || "-"}</span>
           </div>
           <div className="flex items-center justify-center gap-2">
             <Mail size={16} />
-            <span dir="ltr">info@example.com</span>
+            <span dir="ltr">{settings.contact_email || "-"}</span>
           </div>
         </div>
 
