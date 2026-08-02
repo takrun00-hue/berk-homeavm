@@ -1,11 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { notFound } from "next/navigation";
-import { products } from "@/data/products";
 import { formatPrice } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
+import { useProducts } from "@/lib/useProducts";
 import { useState } from "react";
 
 export default function ProductDetailPage({
@@ -15,15 +14,33 @@ export default function ProductDetailPage({
 }) {
   const { locale, t } = useLanguage();
   const { addToCart } = useCart();
+  const { products, loading } = useProducts();
   const [added, setAdded] = useState(false);
+
   const product = products.find((p) => p.slug === params.slug);
-  if (!product) return notFound();
 
   const handleAdd = () => {
+    if (!product) return;
     addToCart(product);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   };
+
+  if (loading) {
+    return (
+      <section className="py-16 px-4 text-center text-sm text-gray-500">
+        {t("loading")}
+      </section>
+    );
+  }
+
+  if (!product) {
+    return (
+      <section className="py-16 px-4 text-center text-sm text-gray-500">
+        {t("productNotFound")}
+      </section>
+    );
+  }
 
   return (
     <section className="py-10 px-4 max-w-3xl mx-auto space-y-6">
@@ -48,7 +65,7 @@ export default function ProductDetailPage({
           onClick={handleAdd}
           className="bg-black text-gold px-6 py-3 rounded-md font-bold mt-4"
         >
-          {added ? "✓ Sepete Eklendi" : t("addToCart")}
+          {added ? "✓" : t("addToCart")}
         </button>
       </div>
     </section>
