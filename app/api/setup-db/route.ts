@@ -105,9 +105,22 @@ export async function GET(req: NextRequest) {
       ('contact_phone', '+90 000 000 0000'),
       ('contact_email', 'info@example.com'),
       ('contact_address', 'Adres, Şehir, Ülke'),
+      ('active_gateway', 'none'),
       ('iyzico_api_key', ''),
       ('iyzico_secret_key', ''),
-      ('iyzico_base_url', 'https://sandbox-api.iyzipay.com')
+      ('iyzico_base_url', 'https://sandbox-api.iyzipay.com'),
+      ('paytr_merchant_id', ''),
+      ('paytr_merchant_key', ''),
+      ('paytr_merchant_salt', '')
+    `;
+  } else {
+    await pool.sql`
+      INSERT INTO site_settings (key, value) VALUES
+      ('active_gateway', 'none'),
+      ('paytr_merchant_id', ''),
+      ('paytr_merchant_key', ''),
+      ('paytr_merchant_salt', '')
+      ON CONFLICT (key) DO NOTHING
     `;
   }
 
