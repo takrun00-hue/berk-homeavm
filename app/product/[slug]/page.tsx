@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { products } from "@/data/products";
 import { formatPrice } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCart } from "@/context/CartContext";
+import { useState } from "react";
 
 export default function ProductDetailPage({
   params,
@@ -12,8 +14,16 @@ export default function ProductDetailPage({
   params: { slug: string };
 }) {
   const { locale, t } = useLanguage();
+  const { addToCart } = useCart();
+  const [added, setAdded] = useState(false);
   const product = products.find((p) => p.slug === params.slug);
   if (!product) return notFound();
+
+  const handleAdd = () => {
+    addToCart(product);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1500);
+  };
 
   return (
     <section className="py-10 px-4 max-w-3xl mx-auto space-y-6">
@@ -34,8 +44,11 @@ export default function ProductDetailPage({
           {locale === "tr" ? "₺" : "TRY"}
         </p>
         <p className="text-gray-600 text-sm">{product.description[locale]}</p>
-        <button className="bg-black text-gold px-6 py-3 rounded-md font-bold mt-4">
-          {t("addToCart")}
+        <button
+          onClick={handleAdd}
+          className="bg-black text-gold px-6 py-3 rounded-md font-bold mt-4"
+        >
+          {added ? "✓ Sepete Eklendi" : t("addToCart")}
         </button>
       </div>
     </section>
