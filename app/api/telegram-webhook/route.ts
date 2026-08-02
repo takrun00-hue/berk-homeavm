@@ -4,6 +4,7 @@ import { pool } from "@/lib/db";
 const ADMIN_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const BOT_LINK = "https://t.me/BerkHomeAVM_bot";
 
 async function sendMessage(chatId: number | string, text: string) {
   await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -97,7 +98,7 @@ KURALLAR:
 3. Kibar, sıcak ve profesyonel bir dil kullan.
 4. Ürün önerirken fiyat aralığını ve kısa açıklamasını da belirt.
 5. Eğer soru ürün kataloğunda olmayan bir konuda ise, müşteriye bir yetkilinin en kısa sürede kendisiyle iletişime geçeceğini söyle.
-6. Cevapların detaylı ve kapsamlı olsun, gerektiğinde birden fazla paragraf kullan.
+6. Cevapların detaylı ve kapsamlı olsun.
 
 MEVCUT ÜRÜNLER:
 ${productContext}
@@ -106,9 +107,11 @@ ${productContext}
 ${contactInfo}`;
 
   try {
-    const replyText =
+    let replyText =
       (await askGroq(systemPrompt, userText)) ||
       "Üzgünüz, şu anda cevap veremiyoruz. En kısa sürede size dönüş yapacağız. / Sorry, we cannot respond right now. We will get back to you shortly.";
+
+    replyText += `\n\n🔗 ${BOT_LINK}`;
 
     await sendMessage(chatId, replyText);
 
@@ -122,7 +125,7 @@ ${contactInfo}`;
     console.error("AI reply error:", err);
     await sendMessage(
       chatId,
-      "Üzgünüz, şu anda cevap veremiyoruz. / Sorry, we cannot respond right now."
+      `Üzgünüz, şu anda cevap veremiyoruz. / Sorry, we cannot respond right now.\n\n🔗 ${BOT_LINK}`
     );
   }
 
