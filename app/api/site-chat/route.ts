@@ -3,6 +3,7 @@ import { pool } from "@/lib/db";
 import { sendTelegramMessage } from "@/lib/telegram";
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const BOT_LINK = "https://t.me/BerkHomeAVM_bot";
 
 async function getStoreContext() {
   try {
@@ -86,11 +87,12 @@ ${contactInfo}`;
     });
 
     const data = await res.json();
-    const reply =
+    let reply =
       data.choices?.[0]?.message?.content ||
       "Sorry, we cannot respond right now.";
 
-    // اطلاع به ادمین در تلگرام از مکالمه سایت
+    reply += `\n\n🔗 Telegram: ${BOT_LINK}`;
+
     await sendTelegramMessage(
       `💻 <b>Site Chat</b>\n\n👤 Soru: ${message}\n\n🤖 Cevap: ${reply}`
     );
@@ -99,7 +101,7 @@ ${contactInfo}`;
   } catch (err) {
     console.error("Site chat error:", err);
     return NextResponse.json(
-      { reply: "Sorry, we cannot respond right now." },
+      { reply: `Sorry, we cannot respond right now.\n\n🔗 Telegram: ${BOT_LINK}` },
       { status: 500 }
     );
   }
