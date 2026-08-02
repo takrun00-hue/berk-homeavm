@@ -137,7 +137,7 @@ export default function SiteChatWidget() {
 
       <button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-24 right-24 z-40 bg-black text-gold rounded-full p-4 shadow-lg md:bottom-6 md:right-24"
+        className="fixed bottom-24 right-4 z-40 bg-black text-gold rounded-full p-4 shadow-lg md:bottom-6"
       >
         <MessageCircle size={24} />
       </button>
