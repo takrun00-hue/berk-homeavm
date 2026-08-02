@@ -1,6 +1,8 @@
 import { pool } from "@/lib/db";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const { rows } = await pool.sql`
     SELECT id, slug, name_tr, name_en FROM categories ORDER BY sort_order ASC
