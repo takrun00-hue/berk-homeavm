@@ -1,18 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-
-// این فایل هروقت API Key واقعی iyzico را در Vercel اضافه کردید،
-// خودکار فعال می‌شود، نیازی به تغییر کد نیست.
+import { pool } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
   try {
     const { form, items, total } = await req.json();
 
-    const apiKey = process.env.IYZICO_API_KEY;
-    const secretKey = process.env.IYZICO_SECRET_KEY;
-    const baseUrl =
-      process.env.IYZICO_BASE_URL || "https://sandbox-api.iyzipay.com";
+    const { rows } = await pool.sql`
+      SELECT key, value FROM site_settings
+      WHERE key IN ('iyzico_api_key', 'iyzico_secret_key', 'iyzico_base_url')
+    `;
+    const dbSettings: Record<string, string> = {};
+    rows.forEach((r) => (dbSettings[r.key] = r.value));
 
-    // اگر هنوز کلید iyzico وارد نشده، حالت آزمایشی (Demo)
+    const apiKey = dbSettings.iyzico_api_key || process.env.IYZICO_API_KEY;
+    const secretKey =
+      dbSettings.iyzico_secret_key || process.env.IYZICO_SECRET_KEY;
+    const baseUrl =
+      dbSettings.iyzico_base_url ||
+      process.env.IYZICO_BASE_URL ||
+      "https://sandbox-api.iyzipay.com";
+
     if (!apiKey || !secretKey) {
       console.log("IYZICO keys not set yet. Demo mode active.", {
         form,
@@ -25,10 +32,6 @@ export async function POST(req: NextRequest) {
         message: "Demo mode: ödeme simüle edildi (gerçek değil).",
       });
     }
-
-    // --- گام بعدی: اتصال واقعی به iyzico ---
-    // اینجا بعداً درخواست واقعی به iyzico ارسال می‌شود
-    // با استفاده از apiKey و secretKey از Environment Variables
 
     const iyzicoResponse = await fetch(`${baseUrl}/payment/auth`, {
       method: "POST",
@@ -45,7 +48,7 @@ export async function POST(req: NextRequest) {
           name: form.name,
           email: form.email,
           gsmNumber: form.phone,
-          registrationAddress: form.address,
+          registrationAddress: `${form.street || ""} ${form.neighborhood || ""} ${form.district || ""} ${form.province || ""}`,
         },
         paymentCard: {
           cardHolderName: form.cardName,
