@@ -6,6 +6,7 @@ export function middleware(req: NextRequest) {
     "/admin/products",
     "/admin/categories",
     "/admin/settings",
+    "/admin/payment",
   ];
   const isProtected = protectedPaths.some((p) =>
     req.nextUrl.pathname.startsWith(p)
@@ -27,5 +28,6 @@ export const config = {
     "/admin/products/:path*",
     "/admin/categories/:path*",
     "/admin/settings/:path*",
+    "/admin/payment/:path*",
   ],
 };
