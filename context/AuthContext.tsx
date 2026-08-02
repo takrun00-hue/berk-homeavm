@@ -5,62 +5,74 @@ import { createContext, useContext, useEffect, useState } from "react";
 interface User {
   name: string;
   email: string;
-  password: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => boolean;
-  register: (name: string, email: string, password: string) => boolean;
-  logout: () => void;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<string | null>;
+  register: (
+    name: string,
+    email: string,
+    password: string
+  ) => Promise<string | null>;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const refreshUser = async () => {
+    const res = await fetch("/api/auth/me");
+    const data = await res.json();
+    setUser(data.user);
+  };
 
   useEffect(() => {
-    const saved = localStorage.getItem("current_user");
-    if (saved) setUser(JSON.parse(saved));
+    refreshUser().finally(() => setLoading(false));
   }, []);
 
-  const getUsers = (): User[] => {
-    const saved = localStorage.getItem("users");
-    return saved ? JSON.parse(saved) : [];
+  const login = async (email: string, password: string) => {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      setUser(data.user);
+      return null;
+    }
+    return data.message || "Giriş başarısız.";
   };
 
-  const register = (name: string, email: string, password: string) => {
-    const users = getUsers();
-    if (users.find((u) => u.email === email)) return false;
-
-    const newUser = { name, email, password };
-    users.push(newUser);
-    localStorage.setItem("users", JSON.stringify(users));
-    localStorage.setItem("current_user", JSON.stringify(newUser));
-    setUser(newUser);
-    return true;
+  const register = async (name: string, email: string, password: string) => {
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      setUser(data.user);
+      return null;
+    }
+    return data.message || "Kayıt başarısız.";
   };
 
-  const login = (email: string, password: string) => {
-    const users = getUsers();
-    const found = users.find(
-      (u) => u.email === email && u.password === password
-    );
-    if (!found) return false;
-
-    localStorage.setItem("current_user", JSON.stringify(found));
-    setUser(found);
-    return true;
-  };
-
-  const logout = () => {
-    localStorage.removeItem("current_user");
+  const logout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, register, logout, refreshUser }}
+    >
       {children}
     </AuthContext.Provider>
   );
