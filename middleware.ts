@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(req: NextRequest) {
-  if (req.nextUrl.pathname.startsWith("/admin/upload")) {
+  const protectedPaths = ["/admin/upload", "/admin/products", "/admin/categories"];
+  const isProtected = protectedPaths.some((p) =>
+    req.nextUrl.pathname.startsWith(p)
+  );
+
+  if (isProtected) {
     const auth = req.cookies.get("admin_auth")?.value;
     if (!auth || auth !== process.env.ADMIN_PASSWORD) {
       return NextResponse.redirect(new URL("/admin", req.url));
@@ -11,5 +16,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/upload/:path*"],
+  matcher: ["/admin/upload/:path*", "/admin/products/:path*", "/admin/categories/:path*"],
 };
