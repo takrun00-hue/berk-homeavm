@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { ChevronUp, ChevronDown } from "lucide-react";
+import AdminNav from "@/components/AdminNav";
 
 const STANDARD_SIZE = 1000;
 
@@ -190,12 +190,8 @@ export default function AdminProductsPage() {
 
   return (
     <section className="py-10 px-4 max-w-md mx-auto space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-xl font-extrabold">Ürünler</h1>
-        <Link href="/admin/categories" className="text-xs text-gold underline">
-          Kategoriler →
-        </Link>
-      </div>
+      <h1 className="text-xl font-extrabold">Ürünler</h1>
+      <AdminNav />
 
       <form onSubmit={handleSubmit} className="space-y-2 border rounded-md p-3">
         <p className="font-bold text-sm">
