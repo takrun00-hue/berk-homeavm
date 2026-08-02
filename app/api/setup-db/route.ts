@@ -63,6 +63,13 @@ export async function GET(req: NextRequest) {
     )
   `;
 
+  await pool.sql`
+    CREATE TABLE IF NOT EXISTS site_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT DEFAULT ''
+    )
+  `;
+
   const catCount = await pool.sql`SELECT COUNT(*) FROM categories`;
   if (Number(catCount.rows[0].count) === 0) {
     await pool.sql`
@@ -88,6 +95,19 @@ export async function GET(req: NextRequest) {
       ('noir-bed', 'Noir Yatak', 'Noir Bed', (SELECT id FROM categories WHERE slug='bedroom'), 32000, 41000, 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800', 'Depolama çekmeceli ve gizli aydınlatmalı yatak.', 'Bed with storage drawer and hidden lighting.', 6),
       ('orion-dining-table', 'Orion Yemek Masası', 'Orion Dining Table', (SELECT id FROM categories WHERE slug='dining-room'), 18000, 24000, 'https://images.unsplash.com/photo-1617104678098-de229db51175?w=800', 'Suni mermer kaplamalı ahşap yemek masası.', 'Wooden dining table with faux marble finish.', 7),
       ('atlas-tv-unit', 'Atlas TV Ünitesi', 'Atlas TV Unit', (SELECT id FROM categories WHERE slug='tv-unit'), 12000, 16000, 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800', 'İç depolama alanına sahip modern TV ünitesi.', 'Modern TV unit with internal storage space.', 8)
+    `;
+  }
+
+  const settingsCount = await pool.sql`SELECT COUNT(*) FROM site_settings`;
+  if (Number(settingsCount.rows[0].count) === 0) {
+    await pool.sql`
+      INSERT INTO site_settings (key, value) VALUES
+      ('contact_phone', '+90 000 000 0000'),
+      ('contact_email', 'info@example.com'),
+      ('contact_address', 'Adres, Şehir, Ülke'),
+      ('iyzico_api_key', ''),
+      ('iyzico_secret_key', ''),
+      ('iyzico_base_url', 'https://sandbox-api.iyzipay.com')
     `;
   }
 
