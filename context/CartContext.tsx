@@ -12,6 +12,8 @@ interface CartContextType {
   items: CartItem[];
   addToCart: (product: Product) => void;
   removeFromCart: (productId: string) => void;
+  increaseQuantity: (productId: string) => void;
+  decreaseQuantity: (productId: string) => void;
   totalCount: number;
 }
 
@@ -47,19 +49,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems((prev) => prev.filter((i) => i.product.id !== productId));
   };
 
+  const increaseQuantity = (productId: string) => {
+    setItems((prev) =>
+      prev.map((i) =>
+        i.product.id === productId ? { ...i, quantity: i.quantity + 1 } : i
+      )
+    );
+  };
+
+  const decreaseQuantity = (productId: string) => {
+    setItems((prev) =>
+      prev
+        .map((i) =>
+          i.product.id === productId
+            ? { ...i, quantity: i.quantity - 1 }
+            : i
+        )
+        .filter((i) => i.quantity > 0)
+    );
+  };
+
   const totalCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
-    <CartContext.Provider
-      value={{ items, addToCart, removeFromCart, totalCount }}
-    >
-      {children}
-    </CartContext.Provider>
-  );
-}
-
-export function useCart() {
-  const ctx = useContext(CartContext);
-  if (!ctx) throw new Error("useCart must be used within CartProvider");
-  return ctx;
-}
+    
