@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   const { password } = await req.json();
+  const expected = (process.env.ADMIN_PASSWORD || "").trim();
 
-  if (password === process.env.ADMIN_PASSWORD) {
+  if (password === expected) {
     const res = NextResponse.json({ success: true });
-    res.cookies.set("admin_auth", process.env.ADMIN_PASSWORD || "", {
+    res.cookies.set("admin_auth", expected, {
       httpOnly: true,
       path: "/",
-      maxAge: 60 * 60 * 24 * 7, // ۷ روز
+      maxAge: 60 * 60 * 24 * 7,
     });
     return res;
   }
