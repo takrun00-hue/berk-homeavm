@@ -42,12 +42,15 @@ export const dictionary = {
     returnPolicy: "İptal & İade",
     privacy: "Gizlilik Politikası",
     address: "Adres, Şehir, Ülke",
+
     myCart: "Sepetim",
     emptyCart: "Sepetiniz boş.",
     qty: "Adet",
     total: "Toplam",
     goToCheckout: "Ödemeye Geç",
+
     contactSent: "Mesajınız gönderildi. En kısa sürede size dönüş yapacağız.",
+
     checkoutTitle: "Sipariş Tamamla",
     contactInfo: "İletişim Bilgileri",
     fullName: "Ad Soyad",
@@ -69,6 +72,7 @@ export const dictionary = {
     processing: "İşleniyor...",
     confirmOrder: "SİPARİŞİ ONAYLA",
     cartEmptyCheckout: "Sepetiniz boş.",
+
     loginRegister: "Giriş / Kayıt",
     loginTab: "Giriş Yap",
     registerTab: "Kayıt Ol",
@@ -76,9 +80,11 @@ export const dictionary = {
     forgotPassword: "Şifremi unuttum",
     loginFailed: "Giriş başarısız.",
     registerFailed: "Kayıt başarısız.",
+
     forgotPasswordTitle: "Şifremi Unuttum",
     resetLinkSent: "Eğer bu email kayıtlıysa, sıfırlama linki gönderildi. Lütfen gelen kutunuzu kontrol edin.",
     sendResetLink: "Sıfırlama Linki Gönder",
+
     setNewPassword: "Yeni Şifre Belirle",
     newPassword: "Yeni Şifre",
     confirmPassword: "Şifre Tekrar",
@@ -87,13 +93,16 @@ export const dictionary = {
     passwordTooShort: "Şifre en az 6 karakter olmalı.",
     invalidLink: "Geçersiz link.",
     passwordUpdated: "Şifreniz güncellendi. Giriş sayfasına yönlendiriliyorsunuz...",
+
     myAccount: "Hesabım",
     notLoggedIn: "Giriş yapmadınız.",
     logout: "Çıkış Yap",
+
     myFavorites: "Favorilerim",
     noFavorites: "Henüz favori ürününüz yok.",
+
     loading: "Yükleniyor...",
-    productNotFound: "Ürün bulunamadı."
+    productNotFound: "Ürün bulunamadı.",
   },
   en: {
     brand: "BERK-HOMEAVM",
@@ -136,12 +145,15 @@ export const dictionary = {
     returnPolicy: "Cancellation & Return",
     privacy: "Privacy Policy",
     address: "Address, City, Country",
+
     myCart: "My Cart",
     emptyCart: "Your cart is empty.",
     qty: "Qty",
     total: "Total",
     goToCheckout: "Go to Checkout",
+
     contactSent: "Your message has been sent. We will get back to you soon.",
+
     checkoutTitle: "Checkout",
     contactInfo: "Contact Information",
     fullName: "Full Name",
@@ -163,6 +175,7 @@ export const dictionary = {
     processing: "Processing...",
     confirmOrder: "CONFIRM ORDER",
     cartEmptyCheckout: "Your cart is empty.",
+
     loginRegister: "Login / Register",
     loginTab: "Login",
     registerTab: "Register",
@@ -170,9 +183,11 @@ export const dictionary = {
     forgotPassword: "Forgot password?",
     loginFailed: "Login failed.",
     registerFailed: "Registration failed.",
+
     forgotPasswordTitle: "Forgot Password",
     resetLinkSent: "If this email is registered, a reset link has been sent. Please check your inbox.",
     sendResetLink: "Send Reset Link",
+
     setNewPassword: "Set New Password",
     newPassword: "New Password",
     confirmPassword: "Confirm Password",
@@ -181,14 +196,17 @@ export const dictionary = {
     passwordTooShort: "Password must be at least 6 characters.",
     invalidLink: "Invalid link.",
     passwordUpdated: "Password updated. Redirecting to login...",
+
     myAccount: "My Account",
     notLoggedIn: "You are not logged in.",
     logout: "Logout",
+
     myFavorites: "My Favorites",
     noFavorites: "You have no favorite products yet.",
+
     loading: "Loading...",
-    productNotFound: "Product not found."
-  }
+    productNotFound: "Product not found.",
+  },
 };
 
 export function t(locale: Locale, key: keyof typeof dictionary["tr"]) {
