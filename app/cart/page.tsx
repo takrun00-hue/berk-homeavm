@@ -8,7 +8,7 @@ import { formatPrice } from "@/lib/utils";
 import { X, Plus, Minus } from "lucide-react";
 
 export default function CartPage() {
-  const { locale } = useLanguage();
+  const { locale, t } = useLanguage();
   const { items, removeFromCart, increaseQuantity, decreaseQuantity } =
     useCart();
 
@@ -20,12 +20,8 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <section className="py-16 px-4 max-w-md mx-auto text-center space-y-4">
-        <h1 className="text-2xl font-extrabold">
-          {locale === "tr" ? "Sepetim" : "My Cart"}
-        </h1>
-        <p className="text-gray-500 text-sm">
-          {locale === "tr" ? "Sepetiniz boş." : "Your cart is empty."}
-        </p>
+        <h1 className="text-2xl font-extrabold">{t("myCart")}</h1>
+        <p className="text-gray-500 text-sm">{t("emptyCart")}</p>
       </section>
     );
   }
@@ -33,7 +29,7 @@ export default function CartPage() {
   return (
     <section className="py-10 px-4 max-w-2xl mx-auto space-y-6">
       <h1 className="text-2xl font-extrabold text-center mb-6">
-        {locale === "tr" ? "Sepetim" : "My Cart"}
+        {t("myCart")}
       </h1>
 
       <div className="space-y-4">
@@ -83,7 +79,7 @@ export default function CartPage() {
       </div>
 
       <div className="border-t pt-4 flex justify-between items-center font-extrabold">
-        <span>{locale === "tr" ? "Toplam" : "Total"}</span>
+        <span>{t("total")}</span>
         <span className="text-gold">
           {formatPrice(total, locale)} {locale === "tr" ? "₺" : "TRY"}
         </span>
@@ -93,7 +89,7 @@ export default function CartPage() {
         href="/checkout"
         className="block w-full bg-black text-gold text-center py-3 rounded-md font-bold"
       >
-        {locale === "tr" ? "Ödemeye Geç" : "Go to Checkout"}
+        {t("goToCheckout")}
       </Link>
     </section>
   );
