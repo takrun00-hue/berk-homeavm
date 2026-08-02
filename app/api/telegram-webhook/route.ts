@@ -82,10 +82,7 @@ export async function POST(req: NextRequest) {
   const chatId = message.chat.id;
   const userText = message.text;
   const userName = message.from?.first_name || "Müşteri";
-
-  if (String(chatId) === String(ADMIN_CHAT_ID)) {
-    return NextResponse.json({ ok: true });
-  }
+  const isAdmin = String(chatId) === String(ADMIN_CHAT_ID);
 
   const productContext = await getStoreContext();
   const contactInfo = await getContactInfo();
@@ -115,7 +112,8 @@ ${contactInfo}`;
 
     await sendMessage(chatId, replyText);
 
-    if (ADMIN_CHAT_ID) {
+    // اگر پیام از مشتری بود (نه ادمین)، کپی مکالمه را برای ادمین هم بفرست
+    if (!isAdmin && ADMIN_CHAT_ID) {
       await sendMessage(
         ADMIN_CHAT_ID,
         `💬 ${userName} (Bot Chat)\n\n👤 Soru: ${userText}\n\n🤖 Cevap: ${replyText}`
