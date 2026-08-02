@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 const links = [
   { href: "/admin/products", label: "Ürünler" },
   { href: "/admin/categories", label: "Kategoriler" },
-  { href: "/admin/settings", label: "Ayarlar" },
+  { href: "/admin/settings", label: "İletişim" },
+  { href: "/admin/payment", label: "Ödeme" },
 ];
 
 export default function AdminNav() {
