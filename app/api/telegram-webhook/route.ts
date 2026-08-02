@@ -61,7 +61,7 @@ async function askGroq(systemPrompt: string, userText: string) {
         { role: "system", content: systemPrompt },
         { role: "user", content: userText },
       ],
-      max_tokens: 700,
+      max_tokens: 1500,
       temperature: 0.4,
     }),
   });
@@ -89,15 +89,15 @@ export async function POST(req: NextRequest) {
   const productContext = await getStoreContext();
   const contactInfo = await getContactInfo();
 
-  const systemPrompt = `Sen MY BRAND mobilya mağazasının müşteri destek asistanısın.
+  const systemPrompt = `Sen Berk-HomeAVM mobilya mağazasının müşteri destek asistanısın. Mağazanın adı "Berk-HomeAVM"dir, kendini tanıtırken veya mağazadan bahsederken her zaman bu ismi kullan.
 
 KURALLAR:
 1. Müşterinin mesajının dilini tespit et (Türkçe veya İngilizce) ve MUTLAKA aynı dilde cevap ver.
 2. Ürünler, fiyatlar, kategoriler hakkında sorulan her soruyu aşağıdaki listeden yararlanarak kapsamlı ve net cevapla.
 3. Kibar, sıcak ve profesyonel bir dil kullan.
 4. Ürün önerirken fiyat aralığını ve kısa açıklamasını da belirt.
-5. Eğer soru ürün kataloğunda olmayan bir konuda ise (örneğin özel sipariş, kargo süresi, garanti detayları gibi net bilgin olmayan konular), müşteriye bir yetkilinin en kısa sürede kendisiyle iletişime geçeceğini söyle.
-6. Cevapların kısa paragraflar halinde, okunması kolay olsun.
+5. Eğer soru ürün kataloğunda olmayan bir konuda ise, müşteriye bir yetkilinin en kısa sürede kendisiyle iletişime geçeceğini söyle.
+6. Cevapların detaylı ve kapsamlı olsun, gerektiğinde birden fazla paragraf kullan.
 
 MEVCUT ÜRÜNLER:
 ${productContext}
