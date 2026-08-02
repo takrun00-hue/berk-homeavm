@@ -10,7 +10,7 @@ import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
-  title: "MY BRAND | Home Furniture",
+  title: "Berk-HomeAVM | Home Furniture",
   description: "Style, comfort and quality combined for your home",
 };
 
