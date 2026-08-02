@@ -16,11 +16,33 @@ async function sendMessage(chatId: number | string, text: string) {
 async function getStoreContext() {
   try {
     const { rows } = await pool.sql`
-      SELECT name_tr, price_min, price_max FROM products ORDER BY sort_order ASC LIMIT 20
+      SELECT p.name_tr, p.name_en, p.price_min, p.price_max,
+             p.description_tr, p.description_en,
+             c.name_tr as cat_tr, c.name_en as cat_en
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      ORDER BY p.sort_order ASC
     `;
     return rows
-      .map((p) => `- ${p.name_tr}: ${p.price_min}-${p.price_max} TL`)
+      .map(
+        (p) =>
+          `- [TR] ${p.name_tr} (${p.cat_tr || ""}): ${p.price_min}-${p.price_max} TL. ${p.description_tr}\n  [EN] ${p.name_en} (${p.cat_en || ""}): ${p.price_min}-${p.price_max} TRY. ${p.description_en}`
+      )
       .join("\n");
+  } catch {
+    return "";
+  }
+}
+
+async function getContactInfo() {
+  try {
+    const { rows } = await pool.sql`
+      SELECT key, value FROM site_settings
+      WHERE key IN ('contact_phone', 'contact_email', 'contact_address')
+    `;
+    const s: Record<string, string> = {};
+    rows.forEach((r) => (s[r.key] = r.value));
+    return `Telefon: ${s.contact_phone || "-"} / Phone: ${s.contact_phone || "-"}\nEmail: ${s.contact_email || "-"}\nAdres/Address: ${s.contact_address || "-"}`;
   } catch {
     return "";
   }
@@ -39,7 +61,8 @@ async function askGroq(systemPrompt: string, userText: string) {
         { role: "system", content: systemPrompt },
         { role: "user", content: userText },
       ],
-      max_tokens: 500,
+      max_tokens: 700,
+      temperature: 0.4,
     }),
   });
 
@@ -64,12 +87,28 @@ export async function POST(req: NextRequest) {
   }
 
   const productContext = await getStoreContext();
-  const systemPrompt = `Sen MY BRAND mobilya mağazasının müşteri destek asistanısın. Türkçe ve kibar bir dille cevap ver. Kısa ve net ol. Aşağıda mevcut ürünler ve fiyat aralıkları var:\n\n${productContext}\n\nEğer soruyu cevaplayamıyorsan, müşteriye bir yetkilinin en kısa sürede döneceğini söyle.`;
+  const contactInfo = await getContactInfo();
+
+  const systemPrompt = `Sen MY BRAND mobilya mağazasının müşteri destek asistanısın.
+
+KURALLAR:
+1. Müşterinin mesajının dilini tespit et (Türkçe veya İngilizce) ve MUTLAKA aynı dilde cevap ver.
+2. Ürünler, fiyatlar, kategoriler hakkında sorulan her soruyu aşağıdaki listeden yararlanarak kapsamlı ve net cevapla.
+3. Kibar, sıcak ve profesyonel bir dil kullan.
+4. Ürün önerirken fiyat aralığını ve kısa açıklamasını da belirt.
+5. Eğer soru ürün kataloğunda olmayan bir konuda ise (örneğin özel sipariş, kargo süresi, garanti detayları gibi net bilgin olmayan konular), müşteriye bir yetkilinin en kısa sürede kendisiyle iletişime geçeceğini söyle.
+6. Cevapların kısa paragraflar halinde, okunması kolay olsun.
+
+MEVCUT ÜRÜNLER:
+${productContext}
+
+İLETİŞİM BİLGİLERİ:
+${contactInfo}`;
 
   try {
     const replyText =
       (await askGroq(systemPrompt, userText)) ||
-      "Üzgünüz, şu anda cevap veremiyoruz. En kısa sürede size dönüş yapacağız.";
+      "Üzgünüz, şu anda cevap veremiyoruz. En kısa sürede size dönüş yapacağız. / Sorry, we cannot respond right now. We will get back to you shortly.";
 
     await sendMessage(chatId, replyText);
 
@@ -83,7 +122,7 @@ export async function POST(req: NextRequest) {
     console.error("AI reply error:", err);
     await sendMessage(
       chatId,
-      "Üzgünüz, şu anda cevap veremiyoruz. En kısa sürede size dönüş yapacağız."
+      "Üzgünüz, şu anda cevap veremiyoruz. / Sorry, we cannot respond right now."
     );
   }
 
