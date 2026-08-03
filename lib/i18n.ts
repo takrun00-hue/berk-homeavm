@@ -15,7 +15,7 @@ export const dictionary = {
     search: "Ürünleri ara",
     cart: "Sepet",
     account: "Hesabım",
-    heroTitle: "BERK-HOMEAVM'A HOŞGELDİNİZ",
+    heroTitle: "BERK-HOMEAVM'YA HOŞGELDİNİZ",
     heroSubtitle: "Şıklığı, konforu ve kaliteyi bir arada sunan mobilyalarla yaşam alanlarınızı dönüştürün.",
     heroButton: "İletişim",
     marquee: "Özel Ürünler ★ Yeni Sezon İndirimleri ★ ",
