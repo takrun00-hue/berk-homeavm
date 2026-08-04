@@ -14,26 +14,34 @@ import {
   Menu,
   X,
 } from "lucide-react";
-
-const links = [
-  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/products", label: "Ürünler", icon: Package },
-  { href: "/admin/categories", label: "Kategoriler", icon: Tags },
-  { href: "/admin/settings", label: "İletişim", icon: Phone },
-  { href: "/admin/payment", label: "Ödeme", icon: CreditCard },
-  { href: "/admin/upload", label: "Görsel Yükle", icon: ImageUp },
-];
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function AdminLayout({
   children,
-  title,
+  titleKey,
 }: {
   children: React.ReactNode;
-  title: string;
+  titleKey:
+    | "adminDashboard"
+    | "adminProducts"
+    | "adminCategories"
+    | "adminContact"
+    | "adminPayment"
+    | "adminUpload";
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { locale, setLocale, t } = useLanguage();
+
+  const links = [
+    { href: "/admin/dashboard", labelKey: "adminDashboard" as const, icon: LayoutDashboard },
+    { href: "/admin/products", labelKey: "adminProducts" as const, icon: Package },
+    { href: "/admin/categories", labelKey: "adminCategories" as const, icon: Tags },
+    { href: "/admin/settings", labelKey: "adminContact" as const, icon: Phone },
+    { href: "/admin/payment", labelKey: "adminPayment" as const, icon: CreditCard },
+    { href: "/admin/upload", labelKey: "adminUpload" as const, icon: ImageUp },
+  ];
 
   const handleLogout = async () => {
     await fetch("/api/admin/logout", { method: "POST" });
@@ -42,7 +50,6 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
       <div
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-black text-white transform transition-transform ${
           open ? "translate-x-0" : "-translate-x-full"
@@ -72,7 +79,7 @@ export default function AdminLayout({
                 }`}
               >
                 <Icon size={18} />
-                {l.label}
+                {t(l.labelKey)}
               </Link>
             );
           })}
@@ -81,7 +88,7 @@ export default function AdminLayout({
             className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-red-400 hover:bg-gray-900 w-full mt-4 border-t border-gray-800 pt-4"
           >
             <LogOut size={18} />
-            Çıkış Yap
+            {t("adminLogout")}
           </button>
         </nav>
       </div>
@@ -93,13 +100,29 @@ export default function AdminLayout({
         />
       )}
 
-      {/* Main content */}
       <div className="flex-1 md:ml-0">
-        <div className="bg-white border-b px-4 py-3 flex items-center gap-3 sticky top-0 z-30">
-          <button onClick={() => setOpen(true)} className="md:hidden">
-            <Menu size={22} />
-          </button>
-          <h1 className="font-extrabold text-lg">{title}</h1>
+        <div className="bg-white border-b px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setOpen(true)} className="md:hidden">
+              <Menu size={22} />
+            </button>
+            <h1 className="font-extrabold text-lg">{t(titleKey)}</h1>
+          </div>
+          <div className="flex items-center gap-1 text-xs font-bold">
+            <button
+              onClick={() => setLocale("tr")}
+              className={locale === "tr" ? "text-gold" : "text-gray-400"}
+            >
+              TR
+            </button>
+            <span className="text-gray-300">/</span>
+            <button
+              onClick={() => setLocale("en")}
+              className={locale === "en" ? "text-gold" : "text-gray-400"}
+            >
+              EN
+            </button>
+          </div>
         </div>
         <div className="p-4">{children}</div>
       </div>
