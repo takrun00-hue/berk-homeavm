@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
+import AdminLayout from "@/components/AdminLayout";
+import { useLanguage } from "@/context/LanguageContext";
 
-const STANDARD_SIZE = 1000; // سایز استاندارد مربعی خروجی (px)
+const STANDARD_SIZE = 1000;
 
 export default function AdminUploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -10,8 +12,8 @@ export default function AdminUploadPage() {
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { t } = useLanguage();
 
-  // تغییر سایز و کراپ تصویر به یک مربع استاندارد قبل از آپلود
   const resizeImage = (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -28,7 +30,6 @@ export default function AdminUploadPage() {
         const ctx = canvas.getContext("2d");
         if (!ctx) return reject("Canvas error");
 
-        // کراپ مرکزی به مربع
         const side = Math.min(img.width, img.height);
         const sx = (img.width - side) / 2;
         const sy = (img.height - side) / 2;
@@ -83,10 +84,10 @@ export default function AdminUploadPage() {
       if (data.url) {
         setResultUrl(data.url);
       } else {
-        setError(data.error || "Yükleme başarısız.");
+        setError(data.error || "Upload failed.");
       }
     } catch (err) {
-      setError("Bir hata oluştu.");
+      setError("An error occurred.");
     } finally {
       setLoading(false);
     }
@@ -97,57 +98,53 @@ export default function AdminUploadPage() {
   };
 
   return (
-    <section className="py-16 px-4 max-w-md mx-auto space-y-4">
-      <h1 className="text-2xl font-extrabold text-center">Görsel Yükle</h1>
-      <p className="text-gray-500 text-xs text-center">
-        Görseller otomatik olarak {STANDARD_SIZE}x{STANDARD_SIZE} standart
-        kareye kırpılır.
-      </p>
+    <AdminLayout titleKey="adminUpload">
+      <div className="max-w-md space-y-4">
+        <p className="text-gray-500 text-xs">{t("adminUploadNote")}</p>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
-        className="w-full border rounded-md px-4 py-3 text-sm"
-      />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="w-full border rounded-md px-4 py-3 text-sm bg-white"
+        />
 
-      {loading && (
-        <p className="text-center text-sm text-gray-500">Yükleniyor...</p>
-      )}
+        {loading && (
+          <p className="text-center text-sm text-gray-500">{t("adminUploading")}</p>
+        )}
 
-      {error && <p className="text-red-500 text-xs text-center">{error}</p>}
+        {error && <p className="text-red-500 text-xs text-center">{error}</p>}
 
-      {preview && (
-        <div className="aspect-square w-full rounded-md overflow-hidden border">
-          <img
-            src={preview}
-            alt="preview"
-            className="w-full h-full object-cover"
-          />
-        </div>
-      )}
-
-      {resultUrl && (
-        <div className="space-y-2">
-          <p className="text-xs text-gray-500">
-            Bu linki kopyalayıp ürün verisine (data/products.ts) yapıştırın:
-          </p>
-          <div className="flex gap-2">
-            <input
-              readOnly
-              value={resultUrl}
-              className="flex-1 border rounded-md px-3 py-2 text-xs"
+        {preview && (
+          <div className="aspect-square w-full max-w-xs rounded-md overflow-hidden border">
+            <img
+              src={preview}
+              alt="preview"
+              className="w-full h-full object-cover"
             />
-            <button
-              onClick={copyToClipboard}
-              className="bg-black text-gold px-4 py-2 rounded-md text-xs font-bold"
-            >
-              Kopyala
-            </button>
           </div>
-        </div>
-      )}
-    </section>
+        )}
+
+        {resultUrl && (
+          <div className="space-y-2">
+            <p className="text-xs text-gray-500">{t("adminCopyLink")}</p>
+            <div className="flex gap-2">
+              <input
+                readOnly
+                value={resultUrl}
+                className="flex-1 border rounded-md px-3 py-2 text-xs bg-white"
+              />
+              <button
+                onClick={copyToClipboard}
+                className="bg-black text-gold px-4 py-2 rounded-md text-xs font-bold"
+              >
+                {t("adminCopy")}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </AdminLayout>
   );
 }
