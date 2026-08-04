@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { ChevronUp, ChevronDown } from "lucide-react";
-import AdminNav from "@/components/AdminNav";
+import AdminLayout from "@/components/AdminLayout";
+import { useLanguage } from "@/context/LanguageContext";
 
 const STANDARD_SIZE = 1000;
 
 interface Cat {
   id: number;
   name_tr: string;
+  name_en: string;
 }
 
 interface Prod {
@@ -46,6 +48,7 @@ export default function AdminProductsPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const { locale, t } = useLanguage();
 
   const load = () => {
     fetch("/api/admin/products")
@@ -104,7 +107,7 @@ export default function AdminProductsPage() {
         setForm((f) => ({ ...f, image: data.url }));
       }
     } catch (err) {
-      setError("Görsel yüklenemedi.");
+      setError("Upload failed.");
     } finally {
       setUploading(false);
     }
@@ -153,7 +156,7 @@ export default function AdminProductsPage() {
       resetForm();
       load();
     } else {
-      setError(data.message || "Hata oluştu.");
+      setError(data.message || "Error.");
     }
   };
 
@@ -174,7 +177,7 @@ export default function AdminProductsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Silmek istediğinize emin misiniz?")) return;
+    if (!confirm(t("adminConfirmDelete"))) return;
     await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
     load();
   };
@@ -189,171 +192,170 @@ export default function AdminProductsPage() {
   };
 
   return (
-    <section className="py-10 px-4 max-w-md mx-auto space-y-6">
-      <h1 className="text-xl font-extrabold">Ürünler</h1>
-      <AdminNav />
+    <AdminLayout titleKey="adminProducts">
+      <div className="max-w-md space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-2 border rounded-md p-3 bg-white">
+          <p className="font-bold text-sm">
+            {editingId ? t("adminEditProduct") : t("adminNewProduct")}
+          </p>
 
-      <form onSubmit={handleSubmit} className="space-y-2 border rounded-md p-3">
-        <p className="font-bold text-sm">
-          {editingId ? "Ürünü Düzenle" : "Yeni Ürün Ekle"}
-        </p>
-
-        <input
-          name="slug"
-          placeholder="slug (örn: zenith-sofa-set)"
-          value={form.slug}
-          onChange={handleChange}
-          required
-          className="w-full border rounded-md px-3 py-2 text-sm"
-        />
-        <input
-          name="name_tr"
-          placeholder="Türkçe isim"
-          value={form.name_tr}
-          onChange={handleChange}
-          required
-          className="w-full border rounded-md px-3 py-2 text-sm"
-        />
-        <input
-          name="name_en"
-          placeholder="English name"
-          value={form.name_en}
-          onChange={handleChange}
-          required
-          className="w-full border rounded-md px-3 py-2 text-sm"
-        />
-
-        <select
-          name="category_id"
-          value={form.category_id}
-          onChange={handleChange}
-          className="w-full border rounded-md px-3 py-2 text-sm"
-        >
-          <option value="">Kategori seçin</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name_tr}
-            </option>
-          ))}
-        </select>
-
-        <div className="flex gap-2">
           <input
-            name="price_min"
-            type="number"
-            placeholder="Min fiyat"
-            value={form.price_min}
+            name="slug"
+            placeholder={t("adminSlugPlaceholder")}
+            value={form.slug}
             onChange={handleChange}
             required
-            className="w-1/2 border rounded-md px-3 py-2 text-sm"
-          />
-          <input
-            name="price_max"
-            type="number"
-            placeholder="Max fiyat"
-            value={form.price_max}
-            onChange={handleChange}
-            required
-            className="w-1/2 border rounded-md px-3 py-2 text-sm"
-          />
-        </div>
-
-        <textarea
-          name="description_tr"
-          placeholder="Türkçe açıklama"
-          value={form.description_tr}
-          onChange={handleChange}
-          rows={2}
-          className="w-full border rounded-md px-3 py-2 text-sm"
-        />
-        <textarea
-          name="description_en"
-          placeholder="English description"
-          value={form.description_en}
-          onChange={handleChange}
-          rows={2}
-          className="w-full border rounded-md px-3 py-2 text-sm"
-        />
-
-        <div className="space-y-2">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
             className="w-full border rounded-md px-3 py-2 text-sm"
           />
-          {uploading && <p className="text-xs text-gray-500">Yükleniyor...</p>}
-          {form.image && (
-            <div className="relative w-24 h-24 rounded-md overflow-hidden border">
-              <Image src={form.image} alt="preview" fill className="object-cover" />
-            </div>
-          )}
-        </div>
+          <input
+            name="name_tr"
+            placeholder={t("adminNameTrPlaceholder")}
+            value={form.name_tr}
+            onChange={handleChange}
+            required
+            className="w-full border rounded-md px-3 py-2 text-sm"
+          />
+          <input
+            name="name_en"
+            placeholder={t("adminNameEnPlaceholder")}
+            value={form.name_en}
+            onChange={handleChange}
+            required
+            className="w-full border rounded-md px-3 py-2 text-sm"
+          />
 
-        {error && <p className="text-red-500 text-xs">{error}</p>}
-
-        <div className="flex gap-2">
-          <button className="flex-1 bg-black text-gold py-2 rounded-md text-sm font-bold">
-            {editingId ? "Güncelle" : "Ekle"}
-          </button>
-          {editingId && (
-            <button
-              type="button"
-              onClick={resetForm}
-              className="px-4 border rounded-md text-sm"
-            >
-              İptal
-            </button>
-          )}
-        </div>
-      </form>
-
-      <div className="space-y-2">
-        {products.map((p, idx) => (
-          <div
-            key={p.id}
-            className="flex items-center gap-3 border rounded-md p-3 text-sm"
+          <select
+            name="category_id"
+            value={form.category_id}
+            onChange={handleChange}
+            className="w-full border rounded-md px-3 py-2 text-sm"
           >
-            <div className="relative w-14 h-14 rounded overflow-hidden shrink-0">
-              <Image src={p.image} alt={p.name_tr} fill className="object-cover" />
-            </div>
-            <div className="flex-1">
-              <p className="font-bold">{p.name_tr}</p>
-              <p className="text-gray-400 text-xs">{p.cat_tr || "-"}</p>
-            </div>
-            <div className="flex flex-col">
-              <button
-                disabled={idx === 0}
-                onClick={() => handleMove(p.id, "up")}
-                className="disabled:opacity-20"
-              >
-                <ChevronUp size={16} />
-              </button>
-              <button
-                disabled={idx === products.length - 1}
-                onClick={() => handleMove(p.id, "down")}
-                className="disabled:opacity-20"
-              >
-                <ChevronDown size={16} />
-              </button>
-            </div>
-            <div className="flex flex-col gap-1">
-              <button
-                onClick={() => handleEdit(p)}
-                className="text-xs text-gold underline"
-              >
-                Düzenle
-              </button>
-              <button
-                onClick={() => handleDelete(p.id)}
-                className="text-xs text-red-500 underline"
-              >
-                Sil
-              </button>
-            </div>
+            <option value="">{t("adminSelectCategory")}</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {locale === "tr" ? c.name_tr : c.name_en}
+              </option>
+            ))}
+          </select>
+
+          <div className="flex gap-2">
+            <input
+              name="price_min"
+              type="number"
+              placeholder={t("adminMinPrice")}
+              value={form.price_min}
+              onChange={handleChange}
+              required
+              className="w-1/2 border rounded-md px-3 py-2 text-sm"
+            />
+            <input
+              name="price_max"
+              type="number"
+              placeholder={t("adminMaxPrice")}
+              value={form.price_max}
+              onChange={handleChange}
+              required
+              className="w-1/2 border rounded-md px-3 py-2 text-sm"
+            />
           </div>
-        ))}
+
+          <textarea
+            name="description_tr"
+            placeholder={t("adminDescTr")}
+            value={form.description_tr}
+            onChange={handleChange}
+            rows={2}
+            className="w-full border rounded-md px-3 py-2 text-sm"
+          />
+          <textarea
+            name="description_en"
+            placeholder={t("adminDescEn")}
+            value={form.description_en}
+            onChange={handleChange}
+            rows={2}
+            className="w-full border rounded-md px-3 py-2 text-sm"
+          />
+
+          <div className="space-y-2">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="w-full border rounded-md px-3 py-2 text-sm"
+            />
+            {uploading && <p className="text-xs text-gray-500">{t("adminUploading")}</p>}
+            {form.image && (
+              <div className="relative w-24 h-24 rounded-md overflow-hidden border">
+                <Image src={form.image} alt="preview" fill className="object-cover" />
+              </div>
+            )}
+          </div>
+
+          {error && <p className="text-red-500 text-xs">{error}</p>}
+
+          <div className="flex gap-2">
+            <button className="flex-1 bg-black text-gold py-2 rounded-md text-sm font-bold">
+              {editingId ? t("adminUpdate") : t("adminAdd")}
+            </button>
+            {editingId && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="px-4 border rounded-md text-sm"
+              >
+                {t("adminCancel")}
+              </button>
+            )}
+          </div>
+        </form>
+
+        <div className="space-y-2">
+          {products.map((p, idx) => (
+            <div
+              key={p.id}
+              className="flex items-center gap-3 border rounded-md p-3 text-sm bg-white"
+            >
+              <div className="relative w-14 h-14 rounded overflow-hidden shrink-0">
+                <Image src={p.image} alt={p.name_tr} fill className="object-cover" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold">{locale === "tr" ? p.name_tr : p.name_en}</p>
+                <p className="text-gray-400 text-xs">{p.cat_tr || "-"}</p>
+              </div>
+              <div className="flex flex-col">
+                <button
+                  disabled={idx === 0}
+                  onClick={() => handleMove(p.id, "up")}
+                  className="disabled:opacity-20"
+                >
+                  <ChevronUp size={16} />
+                </button>
+                <button
+                  disabled={idx === products.length - 1}
+                  onClick={() => handleMove(p.id, "down")}
+                  className="disabled:opacity-20"
+                >
+                  <ChevronDown size={16} />
+                </button>
+              </div>
+              <div className="flex flex-col gap-1">
+                <button
+                  onClick={() => handleEdit(p)}
+                  className="text-xs text-gold underline"
+                >
+                  {t("adminEdit")}
+                </button>
+                <button
+                  onClick={() => handleDelete(p.id)}
+                  className="text-xs text-red-500 underline"
+                >
+                  {t("adminDelete")}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    </section>
+    </AdminLayout>
   );
 }
