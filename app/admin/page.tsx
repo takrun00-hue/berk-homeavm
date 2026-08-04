@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
@@ -10,6 +11,7 @@ export default function AdminLoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { t, locale, setLocale } = useLanguage();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,21 +27,37 @@ export default function AdminLoginPage() {
     setLoading(false);
 
     if (res.ok) {
-      router.push("/admin/products");
+      router.push("/admin/dashboard");
     } else {
-      const data = await res.json().catch(() => null);
-      setError(data?.message || "Şifre yanlış.");
+      setError(t("adminWrongPassword"));
     }
   };
 
   return (
     <section className="py-20 px-4 max-w-sm mx-auto space-y-4">
-      <h1 className="text-2xl font-extrabold text-center">Admin Giriş</h1>
+      <div className="flex justify-end gap-1 text-xs font-bold">
+        <button
+          onClick={() => setLocale("tr")}
+          className={locale === "tr" ? "text-gold" : "text-gray-400"}
+        >
+          TR
+        </button>
+        <span className="text-gray-300">/</span>
+        <button
+          onClick={() => setLocale("en")}
+          className={locale === "en" ? "text-gold" : "text-gray-400"}
+        >
+          EN
+        </button>
+      </div>
+      <h1 className="text-2xl font-extrabold text-center">
+        {t("adminLoginTitle")}
+      </h1>
       <form onSubmit={handleLogin} className="space-y-3">
         <div className="relative">
           <input
             type={showPassword ? "text" : "password"}
-            placeholder="Şifre"
+            placeholder={t("adminPasswordPlaceholder")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full border rounded-md px-4 py-3 text-sm pr-12"
@@ -58,7 +76,7 @@ export default function AdminLoginPage() {
           disabled={loading}
           className="w-full bg-black text-gold py-3 rounded-md font-bold disabled:opacity-50"
         >
-          {loading ? "..." : "Giriş Yap"}
+          {loading ? "..." : t("adminLoginButton")}
         </button>
       </form>
     </section>
