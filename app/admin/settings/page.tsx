@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import AdminNav from "@/components/AdminNav";
+import AdminLayout from "@/components/AdminLayout";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function AdminSettingsPage() {
   const [form, setForm] = useState({
@@ -11,6 +12,7 @@ export default function AdminSettingsPage() {
   });
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetch("/api/admin/settings")
@@ -40,48 +42,43 @@ export default function AdminSettingsPage() {
     setSaved(true);
   };
 
-  if (loading) {
-    return (
-      <section className="py-10 px-4 max-w-md mx-auto text-center text-sm text-gray-500">
-        Yükleniyor...
-      </section>
-    );
-  }
-
   return (
-    <section className="py-10 px-4 max-w-md mx-auto space-y-6">
-      <h1 className="text-xl font-extrabold">İletişim Ayarları</h1>
-      <AdminNav />
+    <AdminLayout titleKey="adminContact">
+      <div className="max-w-md">
+        {loading ? (
+          <p className="text-sm text-gray-500">{t("loading")}</p>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-2 bg-white border rounded-md p-3">
+            <input
+              name="contact_phone"
+              placeholder={t("adminPhone")}
+              value={form.contact_phone}
+              onChange={handleChange}
+              className="w-full border rounded-md px-3 py-2 text-sm"
+            />
+            <input
+              name="contact_email"
+              placeholder={t("adminEmail")}
+              value={form.contact_email}
+              onChange={handleChange}
+              className="w-full border rounded-md px-3 py-2 text-sm"
+            />
+            <input
+              name="contact_address"
+              placeholder={t("adminAddress")}
+              value={form.contact_address}
+              onChange={handleChange}
+              className="w-full border rounded-md px-3 py-2 text-sm"
+            />
 
-      <form onSubmit={handleSubmit} className="space-y-2">
-        <input
-          name="contact_phone"
-          placeholder="Telefon"
-          value={form.contact_phone}
-          onChange={handleChange}
-          className="w-full border rounded-md px-3 py-2 text-sm"
-        />
-        <input
-          name="contact_email"
-          placeholder="Email"
-          value={form.contact_email}
-          onChange={handleChange}
-          className="w-full border rounded-md px-3 py-2 text-sm"
-        />
-        <input
-          name="contact_address"
-          placeholder="Adres"
-          value={form.contact_address}
-          onChange={handleChange}
-          className="w-full border rounded-md px-3 py-2 text-sm"
-        />
+            {saved && <p className="text-green-600 text-xs">{t("adminSaved")}</p>}
 
-        {saved && <p className="text-green-600 text-xs">Kaydedildi.</p>}
-
-        <button className="w-full bg-black text-gold py-3 rounded-md text-sm font-bold">
-          Kaydet
-        </button>
-      </form>
-    </section>
+            <button className="w-full bg-black text-gold py-3 rounded-md text-sm font-bold">
+              {t("adminSave")}
+            </button>
+          </form>
+        )}
+      </div>
+    </AdminLayout>
   );
 }
