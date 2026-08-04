@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import AdminNav from "@/components/AdminNav";
+import AdminLayout from "@/components/AdminLayout";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface Cat {
   id: number;
@@ -16,6 +17,7 @@ export default function AdminCategoriesPage() {
   const [nameTr, setNameTr] = useState("");
   const [nameEn, setNameEn] = useState("");
   const [error, setError] = useState("");
+  const { locale, t } = useLanguage();
 
   const load = () => {
     fetch("/api/admin/categories")
@@ -56,57 +58,56 @@ export default function AdminCategoriesPage() {
   };
 
   return (
-    <section className="py-10 px-4 max-w-md mx-auto space-y-6">
-      <h1 className="text-xl font-extrabold">Kategoriler</h1>
-      <AdminNav />
+    <AdminLayout titleKey="adminCategories">
+      <div className="max-w-md space-y-6">
+        <form onSubmit={handleAdd} className="space-y-2 border rounded-md p-3 bg-white">
+          <input
+            placeholder={t("adminSlugPlaceholder")}
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            required
+            className="w-full border rounded-md px-3 py-2 text-sm"
+          />
+          <input
+            placeholder={t("adminNameTrPlaceholder")}
+            value={nameTr}
+            onChange={(e) => setNameTr(e.target.value)}
+            required
+            className="w-full border rounded-md px-3 py-2 text-sm"
+          />
+          <input
+            placeholder={t("adminNameEnPlaceholder")}
+            value={nameEn}
+            onChange={(e) => setNameEn(e.target.value)}
+            required
+            className="w-full border rounded-md px-3 py-2 text-sm"
+          />
+          {error && <p className="text-red-500 text-xs">{error}</p>}
+          <button className="w-full bg-black text-gold py-2 rounded-md text-sm font-bold">
+            {t("adminAdd")}
+          </button>
+        </form>
 
-      <form onSubmit={handleAdd} className="space-y-2 border rounded-md p-3">
-        <input
-          placeholder="slug (örn: sofa-set)"
-          value={slug}
-          onChange={(e) => setSlug(e.target.value)}
-          required
-          className="w-full border rounded-md px-3 py-2 text-sm"
-        />
-        <input
-          placeholder="Türkçe isim"
-          value={nameTr}
-          onChange={(e) => setNameTr(e.target.value)}
-          required
-          className="w-full border rounded-md px-3 py-2 text-sm"
-        />
-        <input
-          placeholder="English name"
-          value={nameEn}
-          onChange={(e) => setNameEn(e.target.value)}
-          required
-          className="w-full border rounded-md px-3 py-2 text-sm"
-        />
-        {error && <p className="text-red-500 text-xs">{error}</p>}
-        <button className="w-full bg-black text-gold py-2 rounded-md text-sm font-bold">
-          Ekle
-        </button>
-      </form>
-
-      <div className="space-y-2">
-        {categories.map((c) => (
-          <div
-            key={c.id}
-            className="flex justify-between items-center border rounded-md p-3 text-sm"
-          >
-            <div>
-              <p className="font-bold">{c.name_tr}</p>
-              <p className="text-gray-400 text-xs">{c.slug}</p>
-            </div>
-            <button
-              onClick={() => handleDelete(c.id)}
-              className="text-red-500 text-xs"
+        <div className="space-y-2">
+          {categories.map((c) => (
+            <div
+              key={c.id}
+              className="flex justify-between items-center border rounded-md p-3 text-sm bg-white"
             >
-              Sil
-            </button>
-          </div>
-        ))}
+              <div>
+                <p className="font-bold">{locale === "tr" ? c.name_tr : c.name_en}</p>
+                <p className="text-gray-400 text-xs">{c.slug}</p>
+              </div>
+              <button
+                onClick={() => handleDelete(c.id)}
+                className="text-red-500 text-xs"
+              >
+                {t("adminDelete")}
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
-    </section>
+    </AdminLayout>
   );
 }
