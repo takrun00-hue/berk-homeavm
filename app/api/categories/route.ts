@@ -1,22 +1,42 @@
 import { pool } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { checkAdmin } from "@/lib/checkAdmin";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export async function GET(req: NextRequest) {
+  if (!checkAdmin(req))
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-export async function GET() {
   const { rows } = await pool.sql`
-    SELECT id, slug, name_tr, name_en FROM categories ORDER BY sort_order ASC
+    SELECT id, slug, name_tr, name_en, image, sort_order FROM categories ORDER BY sort_order ASC
   `;
+  return NextResponse.json({ categories: rows });
+}
 
-  const categories = rows.map((r) => ({
-    id: String(r.id),
-    slug: r.slug,
-    name: { tr: r.name_tr, en: r.name_en },
-  }));
+export async function POST(req: NextRequest) {
+  if (!checkAdmin(req))
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  return NextResponse.json(
-    { categories },
-    { headers: { "Cache-Control": "no-store, max-age=0" } }
-  );
+  const { slug, name_tr, name_en, image } = await req.json();
+  if (!slug || !name_tr || !name_en) {
+    return NextResponse.json(
+      { success: false, message: "Eksik bilgi." },
+      { status: 400 }
+    );
+  }
+
+  const maxOrder = await pool.sql`SELECT COALESCE(MAX(sort_order),0) as m FROM categories`;
+  const nextOrder = Number(maxOrder.rows[0].m) + 1;
+
+  try {
+    await pool.sql`
+      INSERT INTO categories (slug, name_tr, name_en, image, sort_order)
+      VALUES (${slug}, ${name_tr}, ${name_en}, ${image || ""}, ${nextOrder})
+    `;
+    return NextResponse.json({ success: true });
+  } catch (e) {
+    return NextResponse.json(
+      { success: false, message: "Bu slug zaten kullanılıyor." },
+      { status: 400 }
+    );
+  }
 }
