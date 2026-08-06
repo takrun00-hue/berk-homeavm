@@ -8,9 +8,18 @@ export function useCategories() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/categories", { cache: "no-store" })
+    const url = `/api/categories?t=${Date.now()}`;
+    fetch(url, {
+      method: "GET",
+      cache: "no-store",
+      headers: {
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+      },
+    })
       .then((res) => res.json())
       .then((data) => setCategories(data.categories || []))
+      .catch(() => setCategories([]))
       .finally(() => setLoading(false));
   }, []);
 
