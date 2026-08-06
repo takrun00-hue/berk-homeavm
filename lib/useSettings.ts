@@ -7,9 +7,18 @@ export function useSettings() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/settings", { cache: "no-store" })
+    const url = `/api/settings?t=${Date.now()}`;
+    fetch(url, {
+      method: "GET",
+      cache: "no-store",
+      headers: {
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+      },
+    })
       .then((res) => res.json())
       .then((data) => setSettings(data.settings || {}))
+      .catch(() => setSettings({}))
       .finally(() => setLoading(false));
   }, []);
 
