@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Heart, User, Shuffle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
-import { useCategories } from "@/lib/useCategories";
+import { Category } from "@/types";
 
 export default function HamburgerMenu({
   open,
@@ -15,8 +15,17 @@ export default function HamburgerMenu({
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<"menu" | "categories">("menu");
+  const [categories, setCategories] = useState<Category[]>([]);
   const { locale, t } = useLanguage();
-  const { categories } = useCategories();
+
+  useEffect(() => {
+    fetch(`/api/categories?t=${Date.now()}`, {
+      cache: "no-store",
+      headers: { "Cache-Control": "no-cache" },
+    })
+      .then((r) => r.json())
+      .then((d) => setCategories(d.categories || []));
+  }, []);
 
   const menuItems = [
     { label: t("home"), href: "/" },
@@ -113,17 +122,31 @@ export default function HamburgerMenu({
               </ul>
             ) : (
               <ul>
-                {categories.map((cat) => (
-                  <li key={cat.id} className="border-b">
-                    <Link
-                      href={`/products?category=${cat.name.tr}`}
-                      onClick={onClose}
-                      className="block px-4 py-4 font-bold text-sm"
-                    >
-                      {cat.name[locale]}
-                    </Link>
+                {categories.length === 0 ? (
+                  <li className="px-4 py-4 text-sm text-gray-400">
+                    {t("loading")}
                   </li>
-                ))}
+                ) : (
+                  categories.map((cat) => (
+                    <li key={cat.id} className="border-b">
+                      <Link
+                        href={`/products?category=${cat.slug}`}
+                        onClick={onClose}
+                        className="flex items-center gap-3 px-4 py-3 font-bold text-sm"
+                      >
+                        {cat.image && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={cat.image}
+                            alt={cat.name[locale]}
+                            className="w-8 h-8 rounded object-cover border"
+                          />
+                        )}
+                        {cat.name[locale]}
+                      </Link>
+                    </li>
+                  ))
+                )}
               </ul>
             )}
           </motion.div>
