@@ -141,7 +141,9 @@ export const dictionary = {
     adminSelectProduct: "Ürün seçin",
     adminCurrentImage: "Mevcut görsel",
     adminApplyButton: "Ürüne Uygula",
-    adminApplied: "Uygulandı."
+    adminApplied: "Uygulandı.",
+    allProducts: "Tümü",
+    noProducts: "Ürün bulunamadı.",
   },
   en: {
     brand: "BERK-HOMEAVM",
@@ -283,7 +285,9 @@ export const dictionary = {
     adminSelectProduct: "Select product",
     adminCurrentImage: "Current image",
     adminApplyButton: "Apply to Product",
-    adminApplied: "Applied."
+    adminApplied: "Applied.",
+    allProducts: "All",
+    noProducts: "No products found.",
   }
 };
 

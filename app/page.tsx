@@ -4,11 +4,12 @@ import Hero from "@/components/Hero";
 import Marquee from "@/components/Marquee";
 import FeaturesSection from "@/components/FeaturesSection";
 import ProductGrid from "@/components/ProductGrid";
-import { products } from "@/data/products";
+import { useProducts } from "@/lib/useProducts";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function HomePage() {
   const { t } = useLanguage();
+  const { products, loading } = useProducts();
 
   return (
     <>
@@ -22,7 +23,11 @@ export default function HomePage() {
         <p className="text-center text-gray-500 text-sm mb-8 px-4">
           {t("productsSubtitle")}
         </p>
-        <ProductGrid products={products.slice(0, 6)} />
+        {loading ? (
+          <p className="text-center text-sm text-gray-400">{t("loading")}</p>
+        ) : (
+          <ProductGrid products={products.slice(0, 6)} />
+        )}
       </section>
     </>
   );
