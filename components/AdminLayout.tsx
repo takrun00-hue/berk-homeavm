@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -10,6 +10,7 @@ import {
   Phone,
   CreditCard,
   ImageUp,
+  Share2,
   LogOut,
   Menu,
   X,
@@ -27,12 +28,31 @@ export default function AdminLayout({
     | "adminCategories"
     | "adminContact"
     | "adminPayment"
-    | "adminUpload";
+    | "adminUpload"
+    | "adminSocial";
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { locale, setLocale, t } = useLanguage();
+
+  // جلوگیری از رفتن به صفحات عادی سایت وقتی در پنل ادمین هستیم
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const anchor = target.closest("a");
+      if (
+        anchor &&
+        anchor.href &&
+        !anchor.href.includes("/admin") &&
+        anchor.target !== "_blank"
+      ) {
+        e.preventDefault();
+      }
+    };
+    document.addEventListener("click", handleClick, true);
+    return () => document.removeEventListener("click", handleClick, true);
+  }, []);
 
   const links = [
     { href: "/admin/dashboard", labelKey: "adminDashboard" as const, icon: LayoutDashboard },
@@ -40,6 +60,7 @@ export default function AdminLayout({
     { href: "/admin/categories", labelKey: "adminCategories" as const, icon: Tags },
     { href: "/admin/settings", labelKey: "adminContact" as const, icon: Phone },
     { href: "/admin/payment", labelKey: "adminPayment" as const, icon: CreditCard },
+    { href: "/admin/social", labelKey: "adminSocial" as const, icon: Share2 },
     { href: "/admin/upload", labelKey: "adminUpload" as const, icon: ImageUp },
   ];
 
