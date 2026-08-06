@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import VisitTracker from "@/components/VisitTracker";
 import SiteChatWidget from "@/components/SiteChatWidget";
+import StickySocialBar from "@/components/StickySocialBar";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
@@ -30,6 +31,7 @@ export default function RootLayout({
               <main>{children}</main>
               <Footer />
               <SiteChatWidget />
+              <StickySocialBar />
               <MobileBottomNav />
             </CartProvider>
           </AuthProvider>
