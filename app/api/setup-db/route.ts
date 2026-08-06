@@ -43,8 +43,13 @@ export async function GET(req: NextRequest) {
       slug TEXT UNIQUE NOT NULL,
       name_tr TEXT NOT NULL,
       name_en TEXT NOT NULL,
+      image TEXT DEFAULT '',
       sort_order INTEGER DEFAULT 0
     )
+  `;
+
+  await pool.sql`
+    ALTER TABLE categories ADD COLUMN IF NOT EXISTS image TEXT DEFAULT ''
   `;
 
   await pool.sql`
