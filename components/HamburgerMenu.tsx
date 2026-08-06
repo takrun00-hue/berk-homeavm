@@ -19,13 +19,15 @@ export default function HamburgerMenu({
   const { locale, t } = useLanguage();
 
   useEffect(() => {
+    if (!open) return;
     fetch(`/api/categories?t=${Date.now()}`, {
       cache: "no-store",
       headers: { "Cache-Control": "no-cache" },
     })
       .then((r) => r.json())
-      .then((d) => setCategories(d.categories || []));
-  }, []);
+      .then((d) => { if (d.categories) setCategories(d.categories); })
+      .catch(() => {});
+  }, [open]);
 
   const menuItems = [
     { label: t("home"), href: "/" },

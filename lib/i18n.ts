@@ -144,6 +144,7 @@ export const dictionary = {
     adminApplied: "Uygulandı.",
     allProducts: "Tümü",
     noProducts: "Ürün bulunamadı.",
+    categoriesSubtitle: "İhtiyacınıza uygun kategoriyi seçin ve ürünleri keşfedin.",
   },
   en: {
     brand: "BERK-HOMEAVM",
@@ -288,6 +289,7 @@ export const dictionary = {
     adminApplied: "Applied.",
     allProducts: "All",
     noProducts: "No products found.",
+    categoriesSubtitle: "Choose the category that suits your needs and explore the products.",
   }
 };
 
