@@ -27,7 +27,8 @@ export default function AdminCategoriesPage() {
   const load = () => {
     fetch(`/api/admin/categories?t=${Date.now()}`, { cache: "no-store" })
       .then((r) => r.json())
-      .then((d) => setCategories(d.categories || []));
+      .then((d) => { if (d.categories) setCategories(d.categories); })
+      .catch(() => {});
   };
 
   useEffect(() => {
@@ -124,6 +125,10 @@ export default function AdminCategoriesPage() {
 
     if (data.success) {
       resetForm();
+      if (!editingId && data.category) {
+        // Add the new category immediately from the server response
+        setCategories((prev) => [...prev, data.category]);
+      }
       load();
     } else {
       setError(data.message || "Hata oluştu.");
