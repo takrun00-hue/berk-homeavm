@@ -18,6 +18,7 @@ export interface Category {
   id: string;
   slug: string;
   name: LocalizedText;
+  image?: string;
 }
 
 export type Locale = "tr" | "en";
