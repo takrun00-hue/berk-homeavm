@@ -121,7 +121,8 @@ export async function GET(req: NextRequest) {
       ('paytr_merchant_id', ''),
       ('paytr_merchant_key', ''),
       ('paytr_merchant_salt', ''),
-      ('social_instagram', ''),
+      ('social_trendyol', ''),
+      ('social_hepsiburada', ''),
       ('social_facebook', ''),
       ('social_whatsapp', '')
     `;
@@ -132,7 +133,8 @@ export async function GET(req: NextRequest) {
       ('paytr_merchant_id', ''),
       ('paytr_merchant_key', ''),
       ('paytr_merchant_salt', ''),
-      ('social_instagram', ''),
+      ('social_trendyol', ''),
+      ('social_hepsiburada', ''),
       ('social_facebook', ''),
       ('social_whatsapp', '')
       ON CONFLICT (key) DO NOTHING
