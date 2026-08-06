@@ -2,22 +2,32 @@ import { pool } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
 export async function GET() {
-  const { rows } = await pool.sql`
-    SELECT id, slug, name_tr, name_en, image FROM categories ORDER BY sort_order ASC
-  `;
+  try {
+    const { rows } = await pool.sql`
+      SELECT id, slug, name_tr, name_en, image FROM categories ORDER BY sort_order ASC
+    `;
 
-  const categories = rows.map((r) => ({
-    id: String(r.id),
-    slug: r.slug,
-    name: { tr: r.name_tr, en: r.name_en },
-    image: r.image || "",
-  }));
+    const categories = rows.map((r) => ({
+      id: String(r.id),
+      slug: r.slug,
+      name: { tr: r.name_tr, en: r.name_en },
+      image: r.image || "",
+    }));
 
-  return NextResponse.json(
-    { categories },
-    { headers: { "Cache-Control": "no-store, max-age=0" } }
-  );
+    return NextResponse.json(
+      { categories },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+          Pragma: "no-cache",
+        },
+      }
+    );
+  } catch (err) {
+    return NextResponse.json({ categories: [] });
+  }
 }
