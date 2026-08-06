@@ -111,7 +111,10 @@ export async function GET(req: NextRequest) {
       ('iyzico_base_url', 'https://sandbox-api.iyzipay.com'),
       ('paytr_merchant_id', ''),
       ('paytr_merchant_key', ''),
-      ('paytr_merchant_salt', '')
+      ('paytr_merchant_salt', ''),
+      ('social_instagram', ''),
+      ('social_facebook', ''),
+      ('social_whatsapp', '')
     `;
   } else {
     await pool.sql`
@@ -119,7 +122,10 @@ export async function GET(req: NextRequest) {
       ('active_gateway', 'none'),
       ('paytr_merchant_id', ''),
       ('paytr_merchant_key', ''),
-      ('paytr_merchant_salt', '')
+      ('paytr_merchant_salt', ''),
+      ('social_instagram', ''),
+      ('social_facebook', ''),
+      ('social_whatsapp', '')
       ON CONFLICT (key) DO NOTHING
     `;
   }
