@@ -1,22 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import AdminLayout from "@/components/AdminLayout";
 import { useLanguage } from "@/context/LanguageContext";
+
+const STANDARD_SIZE = 800;
 
 interface Cat {
   id: number;
   slug: string;
   name_tr: string;
   name_en: string;
+  image: string;
 }
+
+const emptyForm = { slug: "", name_tr: "", name_en: "", image: "" };
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Cat[]>([]);
-  const [slug, setSlug] = useState("");
-  const [nameTr, setNameTr] = useState("");
-  const [nameEn, setNameEn] = useState("");
+  const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
   const { locale, t } = useLanguage();
 
   const load = () => {
@@ -29,23 +35,101 @@ export default function AdminCategoriesPage() {
     load();
   }, []);
 
-  const handleAdd = async (e: React.FormEvent) => {
+  const resizeImage = (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+      };
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = STANDARD_SIZE;
+        canvas.height = STANDARD_SIZE;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject("Canvas error");
+        const side = Math.min(img.width, img.height);
+        const sx = (img.width - side) / 2;
+        const sy = (img.height - side) / 2;
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, STANDARD_SIZE, STANDARD_SIZE);
+        canvas.toBlob(
+          (blob) => (blob ? resolve(blob) : reject("Blob error")),
+          "image/jpeg",
+          0.9
+        );
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError("");
+    try {
+      const resizedBlob = await resizeImage(file);
+      const formData = new FormData();
+      formData.append("file", resizedBlob, "category.jpg");
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.url) {
+        setForm((f) => ({ ...f, image: data.url }));
+      } else {
+        setError("Görsel yüklenemedi.");
+      }
+    } catch (err) {
+      setError("Görsel yüklenemedi.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const resetForm = () => {
+    setForm(emptyForm);
+    setEditingId(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const res = await fetch("/api/admin/categories", {
-      method: "POST",
+
+    const url = editingId
+      ? `/api/admin/categories/${editingId}/update`
+      : "/api/admin/categories";
+    const method = editingId ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug, name_tr: nameTr, name_en: nameEn }),
+      body: JSON.stringify(form),
     });
     const data = await res.json();
+
     if (data.success) {
-      setSlug("");
-      setNameTr("");
-      setNameEn("");
+      resetForm();
       load();
     } else {
       setError(data.message);
     }
+  };
+
+  const handleEdit = (c: Cat) => {
+    setEditingId(c.id);
+    setForm({
+      slug: c.slug,
+      name_tr: c.name_tr,
+      name_en: c.name_en,
+      image: c.image || "",
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDelete = async (id: number) => {
@@ -60,50 +144,100 @@ export default function AdminCategoriesPage() {
   return (
     <AdminLayout titleKey="adminCategories">
       <div className="max-w-md space-y-6">
-        <form onSubmit={handleAdd} className="space-y-2 border rounded-md p-3 bg-white">
+        <form onSubmit={handleSubmit} className="space-y-2 border rounded-md p-3 bg-white">
+          <p className="font-bold text-sm">
+            {editingId ? t("adminEdit") : t("adminAdd")}
+          </p>
+
           <input
+            name="slug"
             placeholder={t("adminSlugPlaceholder")}
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
+            value={form.slug}
+            onChange={handleChange}
             required
             className="w-full border rounded-md px-3 py-2 text-sm"
           />
           <input
+            name="name_tr"
             placeholder={t("adminNameTrPlaceholder")}
-            value={nameTr}
-            onChange={(e) => setNameTr(e.target.value)}
+            value={form.name_tr}
+            onChange={handleChange}
             required
             className="w-full border rounded-md px-3 py-2 text-sm"
           />
           <input
+            name="name_en"
             placeholder={t("adminNameEnPlaceholder")}
-            value={nameEn}
-            onChange={(e) => setNameEn(e.target.value)}
+            value={form.name_en}
+            onChange={handleChange}
             required
             className="w-full border rounded-md px-3 py-2 text-sm"
           />
+
+          <div className="space-y-2">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="w-full border rounded-md px-3 py-2 text-sm"
+            />
+            {uploading && <p className="text-xs text-gray-500">{t("adminUploading")}</p>}
+            {form.image && (
+              <div className="relative w-24 h-24 rounded-md overflow-hidden border">
+                <Image src={form.image} alt="preview" fill className="object-cover" />
+              </div>
+            )}
+          </div>
+
           {error && <p className="text-red-500 text-xs">{error}</p>}
-          <button className="w-full bg-black text-gold py-2 rounded-md text-sm font-bold">
-            {t("adminAdd")}
-          </button>
+
+          <div className="flex gap-2">
+            <button className="flex-1 bg-black text-gold py-2 rounded-md text-sm font-bold">
+              {editingId ? t("adminUpdate") : t("adminAdd")}
+            </button>
+            {editingId && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="px-4 border rounded-md text-sm"
+              >
+                {t("adminCancel")}
+              </button>
+            )}
+          </div>
         </form>
 
         <div className="space-y-2">
           {categories.map((c) => (
             <div
               key={c.id}
-              className="flex justify-between items-center border rounded-md p-3 text-sm bg-white"
+              className="flex items-center gap-3 border rounded-md p-3 text-sm bg-white"
             >
-              <div>
+              {c.image ? (
+                <div className="relative w-12 h-12 rounded overflow-hidden shrink-0 border">
+                  <Image src={c.image} alt={c.name_tr} fill className="object-cover" />
+                </div>
+              ) : (
+                <div className="w-12 h-12 rounded bg-gray-100 shrink-0" />
+              )}
+              <div className="flex-1">
                 <p className="font-bold">{locale === "tr" ? c.name_tr : c.name_en}</p>
                 <p className="text-gray-400 text-xs">{c.slug}</p>
               </div>
-              <button
-                onClick={() => handleDelete(c.id)}
-                className="text-red-500 text-xs"
-              >
-                {t("adminDelete")}
-              </button>
+              <div className="flex flex-col gap-1">
+                <button
+                  onClick={() => handleEdit(c)}
+                  className="text-xs text-gold underline"
+                >
+                  {t("adminEdit")}
+                </button>
+                <button
+                  onClick={() => handleDelete(c.id)}
+                  className="text-xs text-red-500 underline"
+                >
+                  {t("adminDelete")}
+                </button>
+              </div>
             </div>
           ))}
         </div>
