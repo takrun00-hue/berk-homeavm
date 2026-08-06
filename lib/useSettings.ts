@@ -7,7 +7,7 @@ export function useSettings() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/settings")
+    fetch("/api/settings", { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => setSettings(data.settings || {}))
       .finally(() => setLoading(false));
