@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { rows } = await pool.sql`
-    SELECT id, slug, name_tr, name_en, sort_order FROM categories ORDER BY sort_order ASC
+    SELECT id, slug, name_tr, name_en, image, sort_order FROM categories ORDER BY sort_order ASC
   `;
   return NextResponse.json({ categories: rows });
 }
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   if (!checkAdmin(req))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { slug, name_tr, name_en } = await req.json();
+  const { slug, name_tr, name_en, image } = await req.json();
   if (!slug || !name_tr || !name_en) {
     return NextResponse.json(
       { success: false, message: "Eksik bilgi." },
@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
 
   try {
     await pool.sql`
-      INSERT INTO categories (slug, name_tr, name_en, sort_order)
-      VALUES (${slug}, ${name_tr}, ${name_en}, ${nextOrder})
+      INSERT INTO categories (slug, name_tr, name_en, image, sort_order)
+      VALUES (${slug}, ${name_tr}, ${name_en}, ${image || ""}, ${nextOrder})
     `;
     return NextResponse.json({ success: true });
   } catch (e) {

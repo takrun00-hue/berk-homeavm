@@ -11,6 +11,7 @@ export default function AdminSettingsPage() {
     contact_address: "",
   });
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [loading, setLoading] = useState(true);
   const { t } = useLanguage();
 
@@ -30,16 +31,28 @@ export default function AdminSettingsPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setSaved(false);
+    setSaveError("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/api/admin/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    setSaved(true);
+    setSaved(false);
+    setSaveError("");
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSaved(true);
+      } else {
+        setSaveError(data.error || data.message || "Kayıt başarısız.");
+      }
+    } catch {
+      setSaveError("Bağlantı hatası.");
+    }
   };
 
   return (
@@ -72,6 +85,7 @@ export default function AdminSettingsPage() {
             />
 
             {saved && <p className="text-green-600 text-xs">{t("adminSaved")}</p>}
+            {saveError && <p className="text-red-500 text-xs">{saveError}</p>}
 
             <button className="w-full bg-black text-gold py-3 rounded-md text-sm font-bold">
               {t("adminSave")}
