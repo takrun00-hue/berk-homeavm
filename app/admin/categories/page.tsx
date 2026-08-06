@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import AdminLayout from "@/components/AdminLayout";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -26,7 +25,7 @@ export default function AdminCategoriesPage() {
   const { locale, t } = useLanguage();
 
   const load = () => {
-    fetch("/api/admin/categories")
+    fetch(`/api/admin/categories?t=${Date.now()}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => setCategories(d.categories || []));
   };
@@ -51,7 +50,17 @@ export default function AdminCategoriesPage() {
         const side = Math.min(img.width, img.height);
         const sx = (img.width - side) / 2;
         const sy = (img.height - side) / 2;
-        ctx.drawImage(img, sx, sy, side, side, 0, 0, STANDARD_SIZE, STANDARD_SIZE);
+        ctx.drawImage(
+          img,
+          sx,
+          sy,
+          side,
+          side,
+          0,
+          0,
+          STANDARD_SIZE,
+          STANDARD_SIZE
+        );
         canvas.toBlob(
           (blob) => (blob ? resolve(blob) : reject("Blob error")),
           "image/jpeg",
@@ -81,7 +90,7 @@ export default function AdminCategoriesPage() {
       } else {
         setError("Görsel yüklenemedi.");
       }
-    } catch (err) {
+    } catch {
       setError("Görsel yüklenemedi.");
     } finally {
       setUploading(false);
@@ -117,7 +126,7 @@ export default function AdminCategoriesPage() {
       resetForm();
       load();
     } else {
-      setError(data.message);
+      setError(data.message || "Hata oluştu.");
     }
   };
 
@@ -133,6 +142,7 @@ export default function AdminCategoriesPage() {
   };
 
   const handleDelete = async (id: number) => {
+    if (!confirm(t("adminConfirmDelete"))) return;
     const res = await fetch(`/api/admin/categories/${id}`, {
       method: "DELETE",
     });
@@ -144,7 +154,10 @@ export default function AdminCategoriesPage() {
   return (
     <AdminLayout titleKey="adminCategories">
       <div className="max-w-md space-y-6">
-        <form onSubmit={handleSubmit} className="space-y-2 border rounded-md p-3 bg-white">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-2 border rounded-md p-3 bg-white"
+        >
           <p className="font-bold text-sm">
             {editingId ? t("adminEdit") : t("adminAdd")}
           </p>
@@ -175,16 +188,29 @@ export default function AdminCategoriesPage() {
           />
 
           <div className="space-y-2">
+            <label className="text-xs text-gray-500">
+              {t("adminUpload")}
+            </label>
             <input
               type="file"
               accept="image/*"
               onChange={handleFileChange}
               className="w-full border rounded-md px-3 py-2 text-sm"
             />
-            {uploading && <p className="text-xs text-gray-500">{t("adminUploading")}</p>}
+            {uploading && (
+              <p className="text-xs text-gray-500">{t("adminUploading")}</p>
+            )}
             {form.image && (
-              <div className="relative w-24 h-24 rounded-md overflow-hidden border">
-                <Image src={form.image} alt="preview" fill className="object-cover" />
+              <div className="space-y-1">
+                <p className="text-xs text-green-600">✓ Görsel yüklendi</p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={form.image}
+                  alt="preview"
+                  width={96}
+                  height={96}
+                  className="w-24 h-24 rounded-md object-cover border"
+                />
               </div>
             )}
           </div>
@@ -214,14 +240,23 @@ export default function AdminCategoriesPage() {
               className="flex items-center gap-3 border rounded-md p-3 text-sm bg-white"
             >
               {c.image ? (
-                <div className="relative w-12 h-12 rounded overflow-hidden shrink-0 border">
-                  <Image src={c.image} alt={c.name_tr} fill className="object-cover" />
-                </div>
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={c.image}
+                  alt={c.name_tr}
+                  width={48}
+                  height={48}
+                  className="w-12 h-12 rounded object-cover border shrink-0"
+                />
               ) : (
-                <div className="w-12 h-12 rounded bg-gray-100 shrink-0" />
+                <div className="w-12 h-12 rounded bg-gray-100 shrink-0 border flex items-center justify-center text-gray-300 text-xs">
+                  ?
+                </div>
               )}
               <div className="flex-1">
-                <p className="font-bold">{locale === "tr" ? c.name_tr : c.name_en}</p>
+                <p className="font-bold">
+                  {locale === "tr" ? c.name_tr : c.name_en}
+                </p>
                 <p className="text-gray-400 text-xs">{c.slug}</p>
               </div>
               <div className="flex flex-col gap-1">
