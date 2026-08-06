@@ -2,6 +2,7 @@ import { pool } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET() {
   const { rows } = await pool.sql`
@@ -24,5 +25,8 @@ export async function GET() {
     description: { tr: r.description_tr, en: r.description_en },
   }));
 
-  return NextResponse.json({ products });
+  return NextResponse.json(
+    { products },
+    { headers: { "Cache-Control": "no-store, max-age=0" } }
+  );
 }
