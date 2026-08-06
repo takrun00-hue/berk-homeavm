@@ -8,9 +8,18 @@ export function useProducts() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/products", { cache: "no-store" })
+    const url = `/api/products?t=${Date.now()}`;
+    fetch(url, {
+      method: "GET",
+      cache: "no-store",
+      headers: {
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+      },
+    })
       .then((res) => res.json())
       .then((data) => setProducts(data.products || []))
+      .catch(() => setProducts([]))
       .finally(() => setLoading(false));
   }, []);
 
