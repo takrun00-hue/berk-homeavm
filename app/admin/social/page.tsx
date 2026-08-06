@@ -16,13 +16,16 @@ export default function AdminSocialPage() {
     fetch("/api/admin/settings")
       .then((r) => r.json())
       .then((d) => {
-        setForm({
-          social_instagram: d.settings.social_instagram || "",
-          social_facebook: d.settings.social_facebook || "",
-          social_whatsapp: d.settings.social_whatsapp || "",
-        });
-        setLoading(false);
-      });
+        if (d.settings) {
+          setForm({
+            social_instagram: d.settings.social_instagram || "",
+            social_facebook: d.settings.social_facebook || "",
+            social_whatsapp: d.settings.social_whatsapp || "",
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,12 +35,18 @@ export default function AdminSocialPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/api/admin/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    setSaved(true);
+    setSaved(false);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) setSaved(true);
+    } catch {
+      // silent
+    }
   };
 
   return (

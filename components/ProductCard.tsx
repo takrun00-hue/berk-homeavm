@@ -44,9 +44,7 @@ export default function ProductCard({ product }: { product: Product }) {
         <h3 className="font-bold text-sm">{product.name[locale]}</h3>
         <p className="text-gray-400 text-xs mt-1">{product.category[locale]}</p>
         <p className="text-gold font-extrabold text-sm mt-1">
-          {formatPrice(product.priceMin, locale)} –{" "}
-          {formatPrice(product.priceMax, locale)}{" "}
-          {locale === "tr" ? "₺" : "TRY"}
+          {formatPrice(product.priceMin, locale)} {locale === "tr" ? "₺" : "TRY"}
         </p>
       </div>
     </motion.div>
