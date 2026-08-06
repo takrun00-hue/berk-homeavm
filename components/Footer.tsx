@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Home, MapPin, Phone, Mail } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSettings } from "@/lib/useSettings";
+import SocialBar from "./SocialBar";
 
 export default function Footer() {
   const { t } = useLanguage();
@@ -20,6 +21,8 @@ export default function Footer() {
         </div>
 
         <p className="text-gray-300 text-sm max-w-sm">{t("footerText")}</p>
+
+        <SocialBar />
 
         <div className="flex items-center gap-2 text-sm text-gray-300 flex-wrap justify-center">
           <Link href="/sales-agreement">{t("salesAgreement")}</Link>
