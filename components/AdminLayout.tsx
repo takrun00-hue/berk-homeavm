@@ -49,6 +49,8 @@ export default function AdminLayout({
         anchor &&
         anchor.href &&
         !anchor.href.includes("/admin") &&
+        !anchor.href.startsWith("data:") &&
+        !anchor.href.startsWith("blob:") &&
         anchor.target !== "_blank"
       ) {
         e.preventDefault();
