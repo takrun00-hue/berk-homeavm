@@ -126,7 +126,8 @@ export default function AdminAnalyticsPage() {
         setTopProducts(d.topProducts || []);
         setAllPrices(d.allPrices || []);
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   const buckets = makeBuckets(allPrices);

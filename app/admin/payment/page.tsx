@@ -10,12 +10,22 @@ interface CustomMethod { name: string; details: string; }
 export default function AdminPaymentPage() {
   const [form, setForm] = useState({
     active_gateway: "none",
+    // iyzico
     iyzico_api_key: "",
     iyzico_secret_key: "",
     iyzico_base_url: "",
+    // PayTR
     paytr_merchant_id: "",
     paytr_merchant_key: "",
     paytr_merchant_salt: "",
+    // Stripe
+    stripe_secret_key: "",
+    stripe_publishable_key: "",
+    stripe_webhook_secret: "",
+    // PayPal
+    paypal_client_id: "",
+    paypal_client_secret: "",
+    paypal_mode: "sandbox",
   });
   const [customs, setCustoms] = useState<CustomMethod[]>([]);
   const [saved, setSaved] = useState(false);
@@ -31,7 +41,8 @@ export default function AdminPaymentPage() {
           setCustoms(JSON.parse(d.settings.custom_payment_methods || "[]"));
         } catch { setCustoms([]); }
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -57,53 +68,104 @@ export default function AdminPaymentPage() {
     setSaved(true);
   };
 
+  const Field = ({ name, placeholder, type = "text" }: { name: keyof typeof form; placeholder: string; type?: string }) => (
+    <input
+      name={name}
+      type={type}
+      placeholder={placeholder}
+      value={form[name]}
+      onChange={handleChange}
+      className="w-full border rounded-md px-3 py-2 text-sm"
+    />
+  );
+
   return (
     <AdminLayout titleKey="adminPayment">
-      <div className="max-w-md">
+      <div className="max-w-lg">
         {loading ? (
           <p className="text-sm text-gray-500">{t("loading")}</p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
+
+            {/* Active Gateway */}
             <div className="space-y-2 bg-white border rounded-md p-3">
-              <h2 className="font-bold text-sm">{t("adminActiveGateway")}</h2>
+              <h2 className="font-bold text-sm">{t("adminActiveGateway") || "Aktif Ödeme Yöntemi"}</h2>
               <select
                 name="active_gateway"
                 value={form.active_gateway}
                 onChange={handleChange}
                 className="w-full border rounded-md px-3 py-2 text-sm"
               >
-                <option value="none">{t("adminNoGateway")}</option>
+                <option value="none">{t("adminNoGateway") || "Yok"}</option>
                 <option value="iyzico">iyzico</option>
                 <option value="paytr">PayTR</option>
+                <option value="stripe">Stripe</option>
+                <option value="paypal">PayPal</option>
               </select>
             </div>
 
+            {/* iyzico */}
             <div className="space-y-2 bg-white border rounded-md p-3">
               <h2 className="font-bold text-sm">iyzico</h2>
-              <input name="iyzico_api_key" placeholder="API Key" value={form.iyzico_api_key} onChange={handleChange} className="w-full border rounded-md px-3 py-2 text-sm" />
-              <input name="iyzico_secret_key" placeholder="Secret Key" value={form.iyzico_secret_key} onChange={handleChange} className="w-full border rounded-md px-3 py-2 text-sm" />
-              <input name="iyzico_base_url" placeholder="https://api.iyzipay.com" value={form.iyzico_base_url} onChange={handleChange} className="w-full border rounded-md px-3 py-2 text-sm" />
+              <p className="text-xs text-gray-400">Türkiye için yerel ödeme altyapısı</p>
+              <Field name="iyzico_api_key" placeholder="API Key" />
+              <Field name="iyzico_secret_key" placeholder="Secret Key" />
+              <Field name="iyzico_base_url" placeholder="Base URL (https://api.iyzipay.com)" />
             </div>
 
+            {/* PayTR */}
             <div className="space-y-2 bg-white border rounded-md p-3">
               <h2 className="font-bold text-sm">PayTR</h2>
-              <input name="paytr_merchant_id" placeholder="Merchant ID" value={form.paytr_merchant_id} onChange={handleChange} className="w-full border rounded-md px-3 py-2 text-sm" />
-              <input name="paytr_merchant_key" placeholder="Merchant Key" value={form.paytr_merchant_key} onChange={handleChange} className="w-full border rounded-md px-3 py-2 text-sm" />
-              <input name="paytr_merchant_salt" placeholder="Merchant Salt" value={form.paytr_merchant_salt} onChange={handleChange} className="w-full border rounded-md px-3 py-2 text-sm" />
+              <p className="text-xs text-gray-400">Türkiye için sanal POS altyapısı</p>
+              <Field name="paytr_merchant_id" placeholder="Merchant ID" />
+              <Field name="paytr_merchant_key" placeholder="Merchant Key" />
+              <Field name="paytr_merchant_salt" placeholder="Merchant Salt" />
             </div>
 
+            {/* Stripe */}
+            <div className="space-y-2 bg-white border rounded-md p-3">
+              <h2 className="font-bold text-sm">Stripe</h2>
+              <p className="text-xs text-gray-400">Kredi kartı, Google Pay, Apple Pay destekler</p>
+              <Field name="stripe_publishable_key" placeholder="Publishable Key (pk_live_...)" />
+              <Field name="stripe_secret_key" placeholder="Secret Key (sk_live_...)" type="password" />
+              <Field name="stripe_webhook_secret" placeholder="Webhook Secret (whsec_...)" type="password" />
+            </div>
+
+            {/* PayPal */}
+            <div className="space-y-2 bg-white border rounded-md p-3">
+              <h2 className="font-bold text-sm">PayPal</h2>
+              <p className="text-xs text-gray-400">PayPal ve PayPal ile Google Pay desteği</p>
+              <Field name="paypal_client_id" placeholder="Client ID" />
+              <Field name="paypal_client_secret" placeholder="Client Secret" type="password" />
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Mod</label>
+                <select
+                  name="paypal_mode"
+                  value={form.paypal_mode}
+                  onChange={handleChange}
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                >
+                  <option value="sandbox">Sandbox (Test)</option>
+                  <option value="live">Live (Canlı)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Custom Methods */}
             <div className="bg-white border rounded-md p-3 space-y-2">
               <div className="flex items-center justify-between">
-                <h2 className="font-bold text-sm">Özel Ödeme Yöntemleri</h2>
+                <div>
+                  <h2 className="font-bold text-sm">Özel Ödeme Yöntemleri</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Havale, IBAN, kapıda ödeme gibi yöntemler</p>
+                </div>
                 <button
                   type="button"
                   onClick={addCustom}
                   className="flex items-center gap-1 text-xs font-bold text-gold bg-black px-2 py-1 rounded"
                 >
-                  <Plus size={12} /> {t("adminAddPayment")}
+                  <Plus size={12} /> {t("adminAddPayment") || "Ekle"}
                 </button>
               </div>
-              <p className="text-xs text-gray-400">Havale, IBAN, kapıda ödeme gibi yöntemler ekleyin.</p>
 
               {customs.length === 0 && (
                 <p className="text-xs text-gray-400">Henüz özel ödeme yöntemi yok.</p>
@@ -119,15 +181,15 @@ export default function AdminPaymentPage() {
                     <Trash2 size={14} />
                   </button>
                   <input
-                    placeholder={t("adminPaymentName")}
+                    placeholder={t("adminPaymentName") || "Yöntem adı (örn: Havale)"}
                     value={m.name}
                     onChange={(e) => updateCustom(i, "name", e.target.value)}
                     className="w-full border rounded px-2 py-1.5 text-sm pr-8"
                   />
                   <textarea
-                    placeholder={t("adminPaymentDetails")}
+                    placeholder={t("adminPaymentDetails") || "Detaylar (IBAN, talimatlar...)"}
                     value={m.details}
-                    onChange={(e) => updateCustom(i, "details", e.target.value as string)}
+                    onChange={(e) => updateCustom(i, "details", e.target.value)}
                     rows={2}
                     className="w-full border rounded px-2 py-1.5 text-sm resize-none"
                   />
@@ -135,10 +197,10 @@ export default function AdminPaymentPage() {
               ))}
             </div>
 
-            {saved && <p className="text-green-600 text-xs">{t("adminSaved")}</p>}
+            {saved && <p className="text-green-600 text-xs font-semibold">{t("adminSaved") || "Kaydedildi ✓"}</p>}
 
             <button className="w-full bg-black text-gold py-3 rounded-md text-sm font-bold">
-              {t("adminSave")}
+              {t("adminSave") || "Kaydet"}
             </button>
           </form>
         )}
