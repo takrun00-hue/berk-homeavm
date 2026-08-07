@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
       name TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
+      discount_percent INTEGER DEFAULT 0,
       created_at TIMESTAMP DEFAULT NOW()
     )
   `;
@@ -49,26 +50,6 @@ export async function GET(req: NextRequest) {
   `;
 
   await pool.sql`
-    ALTER TABLE categories ADD COLUMN IF NOT EXISTS image TEXT DEFAULT ''
-  `;
-
-  await pool.sql`
-    ALTER TABLE categories ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0
-  `;
-
-  await pool.sql`
-    ALTER TABLE users ADD COLUMN IF NOT EXISTS discount_percent INTEGER DEFAULT 0
-  `;
-
-  await pool.sql`
-    ALTER TABLE products ADD COLUMN IF NOT EXISTS discount_percent INTEGER DEFAULT 0
-  `;
-
-  await pool.sql`
-    ALTER TABLE products ADD COLUMN IF NOT EXISTS variants TEXT DEFAULT '[]'
-  `;
-
-  await pool.sql`
     CREATE TABLE IF NOT EXISTS products (
       id SERIAL PRIMARY KEY,
       slug TEXT UNIQUE NOT NULL,
@@ -80,7 +61,9 @@ export async function GET(req: NextRequest) {
       image TEXT NOT NULL,
       description_tr TEXT DEFAULT '',
       description_en TEXT DEFAULT '',
-      sort_order INTEGER DEFAULT 0
+      sort_order INTEGER DEFAULT 0,
+      discount_percent INTEGER DEFAULT 0,
+      variants TEXT DEFAULT '[]'
     )
   `;
 
@@ -90,6 +73,44 @@ export async function GET(req: NextRequest) {
       value TEXT DEFAULT ''
     )
   `;
+
+  await pool.sql`
+    CREATE TABLE IF NOT EXISTS orders (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      status TEXT DEFAULT 'pending',
+      total_price INTEGER NOT NULL,
+      shipping_address TEXT DEFAULT '',
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )
+  `;
+
+  await pool.sql`
+    CREATE TABLE IF NOT EXISTS order_items (
+      id SERIAL PRIMARY KEY,
+      order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+      product_id INTEGER REFERENCES products(id) ON DELETE SET NULL,
+      quantity INTEGER NOT NULL DEFAULT 1,
+      unit_price INTEGER NOT NULL
+    )
+  `;
+
+  await pool.sql`
+    CREATE TABLE IF NOT EXISTS favorites (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+      created_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE(user_id, product_id)
+    )
+  `;
+
+  await pool.sql`ALTER TABLE categories ADD COLUMN IF NOT EXISTS image TEXT DEFAULT ''`;
+  await pool.sql`ALTER TABLE categories ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0`;
+  await pool.sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS discount_percent INTEGER DEFAULT 0`;
+  await pool.sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS discount_percent INTEGER DEFAULT 0`;
+  await pool.sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS variants TEXT DEFAULT '[]'`;
 
   const catCount = await pool.sql`SELECT COUNT(*) FROM categories`;
   if (Number(catCount.rows[0].count) === 0) {
@@ -119,39 +140,24 @@ export async function GET(req: NextRequest) {
     `;
   }
 
-  const settingsCount = await pool.sql`SELECT COUNT(*) FROM site_settings`;
-  if (Number(settingsCount.rows[0].count) === 0) {
-    await pool.sql`
-      INSERT INTO site_settings (key, value) VALUES
-      ('contact_phone', '+90 000 000 0000'),
-      ('contact_email', 'info@example.com'),
-      ('contact_address', 'Adres, Şehir, Ülke'),
-      ('active_gateway', 'none'),
-      ('iyzico_api_key', ''),
-      ('iyzico_secret_key', ''),
-      ('iyzico_base_url', 'https://sandbox-api.iyzipay.com'),
-      ('paytr_merchant_id', ''),
-      ('paytr_merchant_key', ''),
-      ('paytr_merchant_salt', ''),
-      ('social_trendyol', ''),
-      ('social_hepsiburada', ''),
-      ('social_facebook', ''),
-      ('social_whatsapp', '')
-    `;
-  } else {
-    await pool.sql`
-      INSERT INTO site_settings (key, value) VALUES
-      ('active_gateway', 'none'),
-      ('paytr_merchant_id', ''),
-      ('paytr_merchant_key', ''),
-      ('paytr_merchant_salt', ''),
-      ('social_trendyol', ''),
-      ('social_hepsiburada', ''),
-      ('social_facebook', ''),
-      ('social_whatsapp', '')
-      ON CONFLICT (key) DO NOTHING
-    `;
-  }
+  await pool.sql`
+    INSERT INTO site_settings (key, value) VALUES
+    ('contact_phone', '+90 000 000 0000'),
+    ('contact_email', 'info@example.com'),
+    ('contact_address', 'Adres, Şehir, Ülke'),
+    ('active_gateway', 'none'),
+    ('iyzico_api_key', ''),
+    ('iyzico_secret_key', ''),
+    ('iyzico_base_url', 'https://sandbox-api.iyzipay.com'),
+    ('paytr_merchant_id', ''),
+    ('paytr_merchant_key', ''),
+    ('paytr_merchant_salt', ''),
+    ('social_trendyol', ''),
+    ('social_hepsiburada', ''),
+    ('social_facebook', ''),
+    ('social_whatsapp', '')
+    ON CONFLICT (key) DO NOTHING
+  `;
 
   return NextResponse.json({ success: true, message: "Tablolar hazır." });
 }

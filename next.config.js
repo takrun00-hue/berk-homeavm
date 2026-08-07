@@ -8,11 +8,11 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "*.public.blob.vercel-storage.com",
+        hostname: "*.r2.dev",
       },
       {
         protocol: "https",
-        hostname: "*.blob.vercel-storage.com",
+        hostname: "pub-*.r2.dev",
       },
     ],
   },

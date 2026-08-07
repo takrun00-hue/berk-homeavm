@@ -1,9 +1,5 @@
-import { createPool } from "@vercel/postgres";
 import { randomBytes } from "crypto";
-
-const pool = createPool({
-  connectionString: process.env.DATABASE_URL,
-});
+import { pool } from "@/lib/db";
 
 export async function createSession(userId: number) {
   const token = randomBytes(32).toString("hex");
@@ -26,5 +22,3 @@ export async function getUserFromToken(token: string | undefined) {
 export async function destroySession(token: string) {
   await pool.sql`DELETE FROM sessions WHERE token = ${token}`;
 }
-
-export { pool };
