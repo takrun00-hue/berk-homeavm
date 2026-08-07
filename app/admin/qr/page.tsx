@@ -29,7 +29,9 @@ export default function AdminQRPage() {
     const link = document.createElement("a");
     link.download = `berk-homeavm-qr-${label}.png`;
     link.href = off.toDataURL("image/png");
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   };
 
   const downloadPrint = () => {
@@ -66,7 +68,9 @@ export default function AdminQRPage() {
     const link = document.createElement("a");
     link.download = "berk-homeavm-qr-baskı.png";
     link.href = off.toDataURL("image/png");
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   };
 
   return (
