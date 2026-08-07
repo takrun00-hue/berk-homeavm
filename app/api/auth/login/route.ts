@@ -1,11 +1,7 @@
-import { createPool } from "@vercel/postgres";
+import { pool } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 import { createSession } from "@/lib/auth";
-
-const pool = createPool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 export async function POST(req: NextRequest) {
   const { email, password } = await req.json();

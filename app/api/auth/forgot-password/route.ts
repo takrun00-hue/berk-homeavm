@@ -1,11 +1,8 @@
-import { createPool } from "@vercel/postgres";
+import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { Resend } from "resend";
 
-const pool = createPool({
-  connectionString: process.env.DATABASE_URL,
-});
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
