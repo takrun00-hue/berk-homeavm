@@ -16,6 +16,7 @@ import {
   X,
   Users,
   QrCode,
+  BarChart2,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -33,7 +34,8 @@ export default function AdminLayout({
     | "adminUpload"
     | "adminSocial"
     | "adminUsers"
-    | "adminQR";
+    | "adminQR"
+    | "adminAnalytics";
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -69,6 +71,7 @@ export default function AdminLayout({
     { href: "/admin/social", labelKey: "adminSocial" as const, icon: Share2 },
     { href: "/admin/users", labelKey: "adminUsers" as const, icon: Users },
     { href: "/admin/qr", labelKey: "adminQR" as const, icon: QrCode },
+    { href: "/admin/analytics", labelKey: "adminAnalytics" as const, icon: BarChart2 },
     { href: "/admin/upload", labelKey: "adminUpload" as const, icon: ImageUp },
   ];
 

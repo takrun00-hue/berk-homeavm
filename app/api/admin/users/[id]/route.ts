@@ -19,3 +19,14 @@ export async function PATCH(
   `;
   return NextResponse.json({ success: true });
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  if (!checkAdmin(req))
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  await pool.sql`DELETE FROM users WHERE id = ${params.id}`;
+  return NextResponse.json({ success: true });
+}

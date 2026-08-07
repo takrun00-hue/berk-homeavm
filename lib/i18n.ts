@@ -156,6 +156,15 @@ export const dictionary = {
     allProducts: "Tümü",
     noProducts: "Ürün bulunamadı.",
     categoriesSubtitle: "İhtiyacınıza uygun kategoriyi seçin ve ürünleri keşfedin.",
+    adminAnalytics: "Analitik",
+    adminAddField: "Alan Ekle",
+    adminFieldLabel: "Alan Başlığı",
+    adminFieldValue: "Alan İçeriği",
+    adminAddPayment: "Ödeme Yöntemi Ekle",
+    adminPaymentName: "Ödeme adı",
+    adminPaymentDetails: "Bilgi / IBAN / URL",
+    adminAddUser: "Kullanıcı Ekle",
+    adminConfirmDeleteUser: "Bu kullanıcıyı silmek istediğinize emin misiniz?",
   },
   en: {
     brand: "BERK-HOMEAVM",
@@ -312,6 +321,15 @@ export const dictionary = {
     allProducts: "All",
     noProducts: "No products found.",
     categoriesSubtitle: "Choose the category that suits your needs and explore the products.",
+    adminAnalytics: "Analytics",
+    adminAddField: "Add Field",
+    adminFieldLabel: "Field Label",
+    adminFieldValue: "Field Value",
+    adminAddPayment: "Add Payment Method",
+    adminPaymentName: "Payment name",
+    adminPaymentDetails: "Details / IBAN / URL",
+    adminAddUser: "Add User",
+    adminConfirmDeleteUser: "Are you sure you want to delete this user?",
   }
 };
 
