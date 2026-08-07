@@ -14,6 +14,7 @@ import {
   LogOut,
   Menu,
   X,
+  Users,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -29,7 +30,8 @@ export default function AdminLayout({
     | "adminContact"
     | "adminPayment"
     | "adminUpload"
-    | "adminSocial";
+    | "adminSocial"
+    | "adminUsers";
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -61,6 +63,7 @@ export default function AdminLayout({
     { href: "/admin/settings", labelKey: "adminContact" as const, icon: Phone },
     { href: "/admin/payment", labelKey: "adminPayment" as const, icon: CreditCard },
     { href: "/admin/social", labelKey: "adminSocial" as const, icon: Share2 },
+    { href: "/admin/users", labelKey: "adminUsers" as const, icon: Users },
     { href: "/admin/upload", labelKey: "adminUpload" as const, icon: ImageUp },
   ];
 

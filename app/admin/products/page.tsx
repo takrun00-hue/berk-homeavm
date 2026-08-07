@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronUp, ChevronDown, Plus, Trash2 } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -12,6 +12,12 @@ interface Cat {
   id: number;
   name_tr: string;
   name_en: string;
+}
+
+interface ColorVariant {
+  name: string;
+  hex: string;
+  image: string;
 }
 
 interface Prod {
@@ -27,6 +33,8 @@ interface Prod {
   description_tr: string;
   description_en: string;
   sort_order: number;
+  discount_percent: number;
+  variants: ColorVariant[];
 }
 
 const emptyForm = {
@@ -39,15 +47,20 @@ const emptyForm = {
   image: "",
   description_tr: "",
   description_en: "",
+  discount_percent: "0",
 };
+
+const emptyVariant: ColorVariant = { name: "", hex: "#000000", image: "" };
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Prod[]>([]);
   const [categories, setCategories] = useState<Cat[]>([]);
   const [form, setForm] = useState(emptyForm);
+  const [variants, setVariants] = useState<ColorVariant[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [variantUploading, setVariantUploading] = useState<number | null>(null);
   const { locale, t } = useLanguage();
 
   const load = () => {
@@ -121,7 +134,31 @@ export default function AdminProductsPage() {
 
   const resetForm = () => {
     setForm(emptyForm);
+    setVariants([]);
     setEditingId(null);
+  };
+
+  const addVariant = () => setVariants((v) => [...v, { ...emptyVariant }]);
+
+  const updateVariant = (i: number, field: keyof ColorVariant, value: string) => {
+    setVariants((v) => v.map((item, idx) => idx === i ? { ...item, [field]: value } : item));
+  };
+
+  const removeVariant = (i: number) => setVariants((v) => v.filter((_, idx) => idx !== i));
+
+  const handleVariantImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, i: number) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setVariantUploading(i);
+    try {
+      const resizedBlob = await resizeImage(file);
+      const formData = new FormData();
+      formData.append("file", resizedBlob, "variant.jpg");
+      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.url) updateVariant(i, "image", data.url);
+    } catch {}
+    finally { setVariantUploading(null); }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -138,6 +175,8 @@ export default function AdminProductsPage() {
       image: form.image,
       description_tr: form.description_tr,
       description_en: form.description_en,
+      discount_percent: Number(form.discount_percent) || 0,
+      variants: variants.filter((v) => v.name && v.image),
     };
 
     const url = editingId
@@ -172,7 +211,9 @@ export default function AdminProductsPage() {
       image: p.image,
       description_tr: p.description_tr || "",
       description_en: p.description_en || "",
+      discount_percent: String(p.discount_percent || 0),
     });
+    setVariants(Array.isArray(p.variants) ? p.variants : []);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -276,6 +317,23 @@ export default function AdminProductsPage() {
             className="w-full border rounded-md px-3 py-2 text-sm"
           />
 
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-gray-600 whitespace-nowrap">İndirim (%):</label>
+            <input
+              name="discount_percent"
+              type="number"
+              min={0}
+              max={100}
+              placeholder="0"
+              value={form.discount_percent}
+              onChange={handleChange}
+              className="w-24 border rounded-md px-3 py-2 text-sm"
+            />
+            {Number(form.discount_percent) > 0 && (
+              <span className="text-xs text-green-600 font-bold">%{form.discount_percent} indirim</span>
+            )}
+          </div>
+
           <div className="space-y-2">
             <input
               type="file"
@@ -288,6 +346,54 @@ export default function AdminProductsPage() {
               <div className="relative w-24 h-24 rounded-md overflow-hidden border">
                 <Image src={form.image} alt="preview" fill className="object-cover" />
               </div>
+            )}
+          </div>
+
+          <div className="border rounded-md p-3 space-y-3 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">Renk Seçenekleri</p>
+              <button type="button" onClick={addVariant} className="flex items-center gap-1 text-xs text-gold font-bold">
+                <Plus size={12} /> Renk Ekle
+              </button>
+            </div>
+            {variants.map((v, i) => (
+              <div key={i} className="border rounded-md p-2 bg-white space-y-2">
+                <div className="flex gap-2 items-center">
+                  <input
+                    placeholder="Renk adı (örn: Beyaz)"
+                    value={v.name}
+                    onChange={(e) => updateVariant(i, "name", e.target.value)}
+                    className="flex-1 border rounded px-2 py-1 text-xs"
+                  />
+                  <input
+                    type="color"
+                    value={v.hex}
+                    onChange={(e) => updateVariant(i, "hex", e.target.value)}
+                    className="w-9 h-9 rounded border cursor-pointer"
+                    title="Renk seç"
+                  />
+                  <button type="button" onClick={() => removeVariant(i)} className="text-red-400">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleVariantImageUpload(e, i)}
+                    className="flex-1 border rounded px-2 py-1 text-xs"
+                  />
+                  {variantUploading === i && <span className="text-xs text-gray-400">Yükleniyor...</span>}
+                  {v.image && (
+                    <div className="relative w-10 h-10 rounded overflow-hidden border shrink-0">
+                      <Image src={v.image} alt={v.name} fill className="object-cover" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {variants.length === 0 && (
+              <p className="text-xs text-gray-400">Renk seçeneği yok. "Renk Ekle" ile ekleyebilirsiniz.</p>
             )}
           </div>
 

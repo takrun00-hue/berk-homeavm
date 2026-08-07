@@ -13,7 +13,8 @@ export async function GET() {
            c.name_tr as cat_tr, c.name_en as cat_en
     FROM products p
     LEFT JOIN categories c ON p.category_id = c.id
-    ORDER BY p.sort_order ASC
+    WHERE p.discount_percent > 0
+    ORDER BY p.discount_percent DESC, p.sort_order ASC
   `;
 
   const products = rows.map((r) => ({
@@ -25,7 +26,7 @@ export async function GET() {
     priceMax: r.price_max,
     image: r.image,
     description: { tr: r.description_tr, en: r.description_en },
-    discountPercent: Number(r.discount_percent) || 0,
+    discountPercent: Number(r.discount_percent),
     variants: (() => { try { return JSON.parse(r.variants || "[]"); } catch { return []; } })(),
   }));
 

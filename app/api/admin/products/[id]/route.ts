@@ -19,7 +19,12 @@ export async function PUT(
     image,
     description_tr,
     description_en,
+    discount_percent,
+    variants,
   } = await req.json();
+
+  const discountPct = Math.max(0, Math.min(100, Number(discount_percent) || 0));
+  const variantsJson = JSON.stringify(Array.isArray(variants) ? variants : []);
 
   await pool.sql`
     UPDATE products SET
@@ -31,7 +36,9 @@ export async function PUT(
       price_max = ${price_max},
       image = ${image},
       description_tr = ${description_tr || ""},
-      description_en = ${description_en || ""}
+      description_en = ${description_en || ""},
+      discount_percent = ${discountPct},
+      variants = ${variantsJson}
     WHERE id = ${params.id}
   `;
 

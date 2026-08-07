@@ -3,6 +3,12 @@ export interface LocalizedText {
   en: string;
 }
 
+export interface ColorVariant {
+  name: string;
+  hex: string;
+  image: string;
+}
+
 export interface Product {
   id: string;
   slug: string;
@@ -12,6 +18,8 @@ export interface Product {
   priceMax: number;
   image: string;
   description: LocalizedText;
+  discountPercent?: number;
+  variants?: ColorVariant[];
 }
 
 export interface Category {

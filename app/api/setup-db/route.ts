@@ -57,6 +57,18 @@ export async function GET(req: NextRequest) {
   `;
 
   await pool.sql`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS discount_percent INTEGER DEFAULT 0
+  `;
+
+  await pool.sql`
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS discount_percent INTEGER DEFAULT 0
+  `;
+
+  await pool.sql`
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS variants TEXT DEFAULT '[]'
+  `;
+
+  await pool.sql`
     CREATE TABLE IF NOT EXISTS products (
       id SERIAL PRIMARY KEY,
       slug TEXT UNIQUE NOT NULL,

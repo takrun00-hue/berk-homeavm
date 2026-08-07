@@ -41,11 +41,27 @@ export default function ProductCard({ product }: { product: Product }) {
       </button>
 
       <div className="p-3 text-center">
+        {(product.discountPercent ?? 0) > 0 && (
+          <span className="inline-block bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full mb-1">
+            %{product.discountPercent} İNDİRİM
+          </span>
+        )}
         <h3 className="font-bold text-sm">{product.name[locale]}</h3>
         <p className="text-gray-400 text-xs mt-1">{product.category[locale]}</p>
-        <p className="text-gold font-extrabold text-sm mt-1">
-          {formatPrice(product.priceMin, locale)} {locale === "tr" ? "₺" : "TRY"}
-        </p>
+        {(product.discountPercent ?? 0) > 0 ? (
+          <div className="mt-1">
+            <p className="text-gray-400 text-xs line-through">
+              {formatPrice(product.priceMin, locale)} {locale === "tr" ? "₺" : "TRY"}
+            </p>
+            <p className="text-red-500 font-extrabold text-sm">
+              {formatPrice(Math.round(product.priceMin * (1 - (product.discountPercent ?? 0) / 100)), locale)} {locale === "tr" ? "₺" : "TRY"}
+            </p>
+          </div>
+        ) : (
+          <p className="text-gold font-extrabold text-sm mt-1">
+            {formatPrice(product.priceMin, locale)} {locale === "tr" ? "₺" : "TRY"}
+          </p>
+        )}
       </div>
     </motion.div>
   );

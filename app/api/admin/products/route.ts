@@ -28,6 +28,8 @@ export async function POST(req: NextRequest) {
     image,
     description_tr,
     description_en,
+    discount_percent,
+    variants,
   } = await req.json();
 
   if (!slug || !name_tr || !name_en || !image) {
@@ -39,11 +41,13 @@ export async function POST(req: NextRequest) {
 
   const maxOrder = await pool.sql`SELECT COALESCE(MAX(sort_order),0) as m FROM products`;
   const nextOrder = Number(maxOrder.rows[0].m) + 1;
+  const discountPct = Math.max(0, Math.min(100, Number(discount_percent) || 0));
+  const variantsJson = JSON.stringify(Array.isArray(variants) ? variants : []);
 
   try {
     await pool.sql`
-      INSERT INTO products (slug, name_tr, name_en, category_id, price_min, price_max, image, description_tr, description_en, sort_order)
-      VALUES (${slug}, ${name_tr}, ${name_en}, ${category_id || null}, ${price_min}, ${price_max}, ${image}, ${description_tr || ""}, ${description_en || ""}, ${nextOrder})
+      INSERT INTO products (slug, name_tr, name_en, category_id, price_min, price_max, image, description_tr, description_en, sort_order, discount_percent, variants)
+      VALUES (${slug}, ${name_tr}, ${name_en}, ${category_id || null}, ${price_min}, ${price_max}, ${image}, ${description_tr || ""}, ${description_en || ""}, ${nextOrder}, ${discountPct}, ${variantsJson})
     `;
     return NextResponse.json({ success: true });
   } catch (e) {
