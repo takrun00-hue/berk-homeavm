@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Home, MapPin, Phone, Mail } from "lucide-react";
+import Image from "next/image";
+import { MapPin, Phone, Mail } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSettings } from "@/lib/useSettings";
 import SocialBar from "./SocialBar";
@@ -13,12 +14,13 @@ export default function Footer() {
   return (
     <footer className="bg-black text-white pt-10 pb-6 px-4">
       <div className="flex flex-col items-center gap-3 text-center">
-        <div className="flex flex-col items-center leading-none">
-          <Home size={36} className="text-gold" />
-          <span className="text-gold font-extrabold text-xl -mt-1">
-            {t("brand")}
-          </span>
-        </div>
+        <Image
+          src="/logo.jpg"
+          alt="Berk-HomeAVM"
+          width={100}
+          height={100}
+          className="rounded-full object-cover"
+        />
 
         <p className="text-gray-300 text-sm max-w-sm">{t("footerText")}</p>
 
