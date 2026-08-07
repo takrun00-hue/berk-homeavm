@@ -3,7 +3,6 @@
 import Hero from "@/components/Hero";
 import Marquee from "@/components/Marquee";
 import FeaturesSection from "@/components/FeaturesSection";
-import CategoriesSection from "@/components/CategoriesSection";
 import ProductGrid from "@/components/ProductGrid";
 import SaleSection from "@/components/SaleSection";
 import { useProducts } from "@/lib/useProducts";
@@ -19,8 +18,7 @@ export default function HomePage() {
       <Marquee />
       <FeaturesSection />
       <SaleSection />
-      <CategoriesSection />
-      <section className="py-12">
+<section className="py-12">
         <h2 className="text-center text-2xl font-extrabold mb-2">
           {t("productsTitle")}
         </h2>
