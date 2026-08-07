@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   Users,
+  QrCode,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -31,7 +32,8 @@ export default function AdminLayout({
     | "adminPayment"
     | "adminUpload"
     | "adminSocial"
-    | "adminUsers";
+    | "adminUsers"
+    | "adminQR";
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -64,6 +66,7 @@ export default function AdminLayout({
     { href: "/admin/payment", labelKey: "adminPayment" as const, icon: CreditCard },
     { href: "/admin/social", labelKey: "adminSocial" as const, icon: Share2 },
     { href: "/admin/users", labelKey: "adminUsers" as const, icon: Users },
+    { href: "/admin/qr", labelKey: "adminQR" as const, icon: QrCode },
     { href: "/admin/upload", labelKey: "adminUpload" as const, icon: ImageUp },
   ];
 
