@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, ShoppingCart, Home } from "lucide-react";
+import { Menu, ShoppingCart } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import HamburgerMenu from "./HamburgerMenu";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { useLanguage } from "@/context/LanguageContext";
@@ -24,11 +25,15 @@ export default function Header() {
           <span className="text-sm font-bold">{t("menu")}</span>
         </button>
 
-        <Link href="/" className="flex flex-col items-center leading-none">
-          <Home size={28} className="text-gold" />
-          <span className="text-gold font-extrabold text-lg -mt-1">
-            {t("brand")}
-          </span>
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/logo.jpg"
+            alt="Berk-HomeAVM"
+            width={72}
+            height={72}
+            className="rounded-full object-cover"
+            priority
+          />
         </Link>
 
         <div className="flex items-center gap-4">
