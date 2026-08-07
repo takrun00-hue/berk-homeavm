@@ -99,8 +99,10 @@ export default function AdminQRPage() {
           </p>
 
           <a
-            href={smallUrl}
+            href={smallUrl || "#"}
             download="berk-homeavm-qr-kucuk.png"
+            target="_blank"
+            rel="noopener noreferrer"
             aria-disabled={!ready}
             className={`w-full flex items-center gap-3 bg-white border rounded-lg px-4 py-3 text-sm transition-colors no-underline text-black ${
               ready ? "hover:bg-gray-50 cursor-pointer" : "opacity-40 pointer-events-none"
@@ -116,8 +118,10 @@ export default function AdminQRPage() {
           </a>
 
           <a
-            href={largeUrl}
+            href={largeUrl || "#"}
             download="berk-homeavm-qr-buyuk.png"
+            target="_blank"
+            rel="noopener noreferrer"
             aria-disabled={!ready}
             className={`w-full flex items-center gap-3 bg-white border rounded-lg px-4 py-3 text-sm transition-colors no-underline text-black ${
               ready ? "hover:bg-gray-50 cursor-pointer" : "opacity-40 pointer-events-none"
@@ -133,8 +137,10 @@ export default function AdminQRPage() {
           </a>
 
           <a
-            href={printUrl}
+            href={printUrl || "#"}
             download="berk-homeavm-qr-baski.png"
+            target="_blank"
+            rel="noopener noreferrer"
             aria-disabled={!ready}
             className={`w-full flex items-center gap-3 bg-black text-gold border border-black rounded-lg px-4 py-3 text-sm transition-colors no-underline ${
               ready ? "hover:bg-gray-900 cursor-pointer" : "opacity-40 pointer-events-none"

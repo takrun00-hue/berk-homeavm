@@ -50,6 +50,7 @@ export default function AdminLayout({
       if (
         anchor &&
         anchor.href &&
+        !anchor.hasAttribute("download") &&
         !anchor.href.includes("/admin") &&
         !anchor.href.startsWith("data:") &&
         !anchor.href.startsWith("blob:") &&
