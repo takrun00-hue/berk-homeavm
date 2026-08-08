@@ -7,6 +7,65 @@ import { useLanguage } from "@/context/LanguageContext";
 
 interface CustomMethod { name: string; details: string; }
 
+function PaymentGuide() {
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 space-y-3">
+      <h3 className="font-bold text-sm text-blue-900">🔑 API Keys Nasıl Alınır?</h3>
+
+      {/* Stripe */}
+      <div className="border-t border-blue-200 pt-3">
+        <button
+          onClick={() => setExpanded(expanded === "stripe" ? null : "stripe")}
+          className="flex justify-between items-center w-full text-left text-sm font-semibold text-blue-800 hover:text-blue-900"
+        >
+          Stripe
+          <span>{expanded === "stripe" ? "−" : "+"}</span>
+        </button>
+        {expanded === "stripe" && (
+          <div className="mt-2 text-xs text-blue-700 space-y-1">
+            <ol className="list-decimal list-inside space-y-1">
+              <li>dashboard.stripe.com/register adresine gidin</li>
+              <li>E-mail ve şifre ile kayıt olun</li>
+              <li>Sol menüden Developers → API Keys tıklayın</li>
+              <li>Test mode toggle'ını ON yapın (sağ üst)</li>
+              <li>pk_test_... ile başlayan Publishable Key'i kopyalayın</li>
+              <li>sk_test_... ile başlayan Secret Key'i kopyalayın</li>
+              <li>Her ikisini aşağıya yapıştırın</li>
+            </ol>
+          </div>
+        )}
+      </div>
+
+      {/* PayPal */}
+      <div className="border-t border-blue-200 pt-3">
+        <button
+          onClick={() => setExpanded(expanded === "paypal" ? null : "paypal")}
+          className="flex justify-between items-center w-full text-left text-sm font-semibold text-blue-800 hover:text-blue-900"
+        >
+          PayPal
+          <span>{expanded === "paypal" ? "−" : "+"}</span>
+        </button>
+        {expanded === "paypal" && (
+          <div className="mt-2 text-xs text-blue-700 space-y-1">
+            <ol className="list-decimal list-inside space-y-1">
+              <li>developer.paypal.com adresine gidin</li>
+              <li>Sign Up ile kayıt olun</li>
+              <li>Sol menüden Apps & Credentials tıklayın</li>
+              <li>Sandbox tab aktif olacak</li>
+              <li>Default app'e tıklayın</li>
+              <li>Client ID'yi kopyalayın</li>
+              <li>Secret'ı kopyalayın</li>
+              <li>Her ikisini aşağıya yapıştırın</li>
+            </ol>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPaymentPage() {
   const [form, setForm] = useState({
     active_gateway: "none",
@@ -85,7 +144,9 @@ export default function AdminPaymentPage() {
         {loading ? (
           <p className="text-sm text-gray-500">{t("loading")}</p>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <>
+            <PaymentGuide />
+            <form onSubmit={handleSubmit} className="space-y-4">
 
             {/* Active Gateway */}
             <div className="space-y-2 bg-white border rounded-md p-3">
@@ -202,7 +263,8 @@ export default function AdminPaymentPage() {
             <button className="w-full bg-black text-gold py-3 rounded-md text-sm font-bold">
               {t("adminSave") || "Kaydet"}
             </button>
-          </form>
+            </form>
+          </>
         )}
       </div>
     </AdminLayout>
