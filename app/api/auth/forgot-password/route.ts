@@ -23,18 +23,20 @@ export async function POST(req: NextRequest) {
       const resend = new Resend(process.env.RESEND_API_KEY);
       try {
         await resend.emails.send({
-        from: "MY BRAND <onboarding@resend.dev>",
-        to: email,
-        subject: "Şifre Sıfırlama",
-        html: `
-          <p>Şifrenizi sıfırlamak için aşağıdaki linke tıklayın (15 dakika geçerlidir):</p>
-          <p><a href="${resetUrl}">${resetUrl}</a></p>
-          <p>Bu isteği siz yapmadıysanız bu emaili göz ardı edin.</p>
-        `,
-      });
+          from: "MY BRAND <onboarding@resend.dev>",
+          to: email,
+          subject: "Şifre Sıfırlama",
+          html: `
+            <p>Şifrenizi sıfırlamak için aşağıdaki linke tıklayın (15 dakika geçerlidir):</p>
+            <p><a href="${resetUrl}">${resetUrl}</a></p>
+            <p>Bu isteği siz yapmadıysanız bu emaili göz ardı edin.</p>
+          `,
+        });
       } catch (err) {
         console.error("Email send error:", err);
       }
+    } else {
+      console.warn("Password reset email not sent: RESEND_API_KEY is not configured");
     }
   }
 
