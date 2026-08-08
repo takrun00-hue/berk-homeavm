@@ -116,6 +116,10 @@ export default function AdminAnalyticsPage() {
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [allPrices, setAllPrices] = useState<{ min_price: number; max_price: number }[]>([]);
 
+  const [apiForm, setApiForm] = useState({ trendyol_api_key: "", trendyol_supplier_id: "", hepsiburada_username: "", hepsiburada_api_key: "" });
+  const [apiSaved, setApiSaved] = useState(false);
+  const [apiLoading, setApiLoading] = useState(false);
+
   useEffect(() => {
     fetch("/api/admin/analytics")
       .then((r) => r.json())
@@ -128,7 +132,26 @@ export default function AdminAnalyticsPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    fetch("/api/admin/settings")
+      .then((r) => r.json())
+      .then((d) => {
+        setApiForm((f) => ({ ...f, ...d.settings }));
+      })
+      .catch(() => {});
   }, []);
+
+  const saveApiKeys = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setApiLoading(true);
+    await fetch("/api/admin/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(apiForm),
+    }).catch(() => {});
+    setApiSaved(true);
+    setApiLoading(false);
+  };
 
   const buckets = makeBuckets(allPrices);
   const fmt = (n?: number) => n != null ? n.toLocaleString("tr-TR", { maximumFractionDigits: 0 }) + " ₺" : "—";
@@ -225,6 +248,61 @@ export default function AdminAnalyticsPage() {
           <p className="text-xs text-gray-400 text-center pb-2">
             Veriler bu siteye ait ürünleri yansıtır. Harici pazar karşılaştırması için Trendyol veya Hepsiburada API entegrasyonu gereklidir.
           </p>
+
+          {/* External Marketplace API Integration */}
+          <div className="bg-white border rounded-lg p-4 space-y-3 mt-6">
+            <h2 className="font-bold text-sm">Dış Pazarlardan Veri Çek</h2>
+            <p className="text-xs text-gray-500">Trendyol ve Hepsiburada fiyatlarını takip ederek rekabetçi analiz yapın.</p>
+
+            <form onSubmit={saveApiKeys} className="space-y-3">
+              {/* Trendyol */}
+              <div className="border-t pt-3">
+                <p className="text-xs font-semibold text-gray-700 mb-2">Trendyol API</p>
+                <input
+                  type="text"
+                  placeholder="API Key"
+                  value={apiForm.trendyol_api_key || ""}
+                  onChange={(e) => setApiForm((f) => ({ ...f, trendyol_api_key: e.target.value }))}
+                  className="w-full border rounded px-2 py-1.5 text-sm mb-1"
+                />
+                <input
+                  type="text"
+                  placeholder="Supplier ID"
+                  value={apiForm.trendyol_supplier_id || ""}
+                  onChange={(e) => setApiForm((f) => ({ ...f, trendyol_supplier_id: e.target.value }))}
+                  className="w-full border rounded px-2 py-1.5 text-sm"
+                />
+              </div>
+
+              {/* Hepsiburada */}
+              <div className="border-t pt-3">
+                <p className="text-xs font-semibold text-gray-700 mb-2">Hepsiburada API</p>
+                <input
+                  type="text"
+                  placeholder="Username"
+                  value={apiForm.hepsiburada_username || ""}
+                  onChange={(e) => setApiForm((f) => ({ ...f, hepsiburada_username: e.target.value }))}
+                  className="w-full border rounded px-2 py-1.5 text-sm mb-1"
+                />
+                <input
+                  type="password"
+                  placeholder="API Key"
+                  value={apiForm.hepsiburada_api_key || ""}
+                  onChange={(e) => setApiForm((f) => ({ ...f, hepsiburada_api_key: e.target.value }))}
+                  className="w-full border rounded px-2 py-1.5 text-sm"
+                />
+              </div>
+
+              {apiSaved && <p className="text-green-600 text-xs font-semibold">API bilgileri kaydedildi ✓</p>}
+              <button
+                type="submit"
+                disabled={apiLoading}
+                className="w-full bg-black text-gold py-2 rounded text-xs font-bold disabled:opacity-50"
+              >
+                {apiLoading ? "Kaydediliyor..." : "Kaydet"}
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </AdminLayout>
