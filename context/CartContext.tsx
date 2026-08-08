@@ -14,6 +14,7 @@ interface CartContextType {
   removeFromCart: (productId: string) => void;
   increaseQuantity: (productId: string) => void;
   decreaseQuantity: (productId: string) => void;
+  clearCart: () => void;
   totalCount: number;
 }
 
@@ -69,6 +70,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const clearCart = () => {
+    setItems([]);
+  };
+
   const totalCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
@@ -79,6 +84,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         removeFromCart,
         increaseQuantity,
         decreaseQuantity,
+        clearCart,
         totalCount,
       }}
     >

@@ -122,7 +122,7 @@ export default function CheckoutPage() {
         return;
       }
       if (data.success) {
-        clearCart?.();
+        clearCart();
         router.push("/checkout/success");
       } else {
         setError(data.message || "Ödeme başarısız.");
