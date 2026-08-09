@@ -7,14 +7,17 @@ const pgPool = process.env.SUPABASE_HOST
       database: process.env.SUPABASE_DATABASE || "postgres",
       user: process.env.SUPABASE_USER,
       password: process.env.SUPABASE_PASSWORD,
-      ssl: process.env.NODE_ENV === "production" ? true : { rejectUnauthorized: false },
+      ssl: { rejectUnauthorized: false },
       max: 5,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
     })
   : new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === "production" ? true : { rejectUnauthorized: false },
+      ssl: (process.env.DATABASE_URL || "").includes("localhost") ||
+           (process.env.DATABASE_URL || "").includes("127.0.0.1")
+        ? false
+        : { rejectUnauthorized: false },
       max: 5,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
