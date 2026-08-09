@@ -11,90 +11,27 @@ const getSiteUrl = () => {
   return `${protocol}//${hostname}${portStr}`;
 };
 
-async function buildPrintCanvas(qrDataUrl: string): Promise<HTMLCanvasElement> {
-  const printCanvas = document.createElement("canvas");
-  printCanvas.width = 800;
-  printCanvas.height = 1000;
-
-  const ctx = printCanvas.getContext("2d")!;
-  ctx.fillStyle = "#FFFFFF";
-  ctx.fillRect(0, 0, 800, 1000);
-
-  const qrImg = await loadImage(qrDataUrl);
-  const qrSize = 400;
-  ctx.drawImage(qrImg, (800 - qrSize) / 2, 100, qrSize, qrSize);
-
-  ctx.fillStyle = "#0C0C0B";
-  ctx.textAlign = "center";
-  ctx.font = "bold 48px system-ui, sans-serif";
-  ctx.fillText("Berk-HomeAVM", 400, 600);
-
-  ctx.fillStyle = "#C9A84C";
-  ctx.font = "28px system-ui, sans-serif";
-  ctx.fillText("berk-homeavm.com", 400, 680);
-
-  ctx.fillStyle = "#888888";
-  ctx.font = "18px system-ui, sans-serif";
-  ctx.fillText("EVİNİZE DEĞER KATAR", 400, 750);
-
-  return printCanvas;
-}
-
-const canvasToBlob = (canvas: HTMLCanvasElement): Promise<Blob> =>
-  new Promise((res) => canvas.toBlob((b) => res(b!), "image/png"));
-
-const loadImage = (src: string, timeout = 5000): Promise<HTMLImageElement> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const timeoutId = setTimeout(() => {
-      reject(new Error(`Image load timeout after ${timeout}ms`));
-    }, timeout);
-
-    img.onload = () => {
-      clearTimeout(timeoutId);
-      resolve(img);
-    };
-    img.onerror = () => {
-      clearTimeout(timeoutId);
-      reject(new Error(`Failed to load image from data URL`));
-    };
-    img.src = src;
-  });
-};
-
-const dataUrlToBlob = async (dataUrl: string): Promise<Blob> => {
-  const arr = dataUrl.split(",");
-  const mime = arr[0].match(/:(.*?);/)![1];
-  const bstr = atob(arr[1]);
-  const n = bstr.length;
-  const u8arr = new Uint8Array(n);
-  for (let i = 0; i < n; i++) {
-    u8arr[i] = bstr.charCodeAt(i);
-  }
-  return new Blob([u8arr], { type: mime });
-};
-
 export default function AdminQRPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const blobUrls = useRef<string[]>([]);
   const [siteUrl, setSiteUrl] = useState("https://berk-homeavm.com");
-  const [blobs, setBlobs] = useState<{ small: Blob; large: Blob; print: Blob } | null>(null);
   const [urls, setUrls] = useState<{ small: string; large: string; print: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [sharing, setSharing] = useState(false);
-  const [debugError, setDebugError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const url = getSiteUrl();
     setSiteUrl(url);
+    let isMounted = true;
 
-    const generateQRCodes = async () => {
+    const init = async () => {
       try {
-        console.log("[QR] Starting QR generation");
+        console.log("[QR] Initializing QR codes for:", url);
 
-        // Fetch all three QR codes in parallel
-        console.log("[QR] Fetching all QR codes in parallel...");
-        const [previewRes, smallRes, largeRes] = await Promise.all([
+        // Fetch all QR codes
+        console.log("[QR] Fetching QR codes...");
+        const responses = await Promise.all([
           fetch("/api/admin/qr-code", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -112,75 +49,129 @@ export default function AdminQRPage() {
           }),
         ]);
 
-        if (!previewRes.ok || !smallRes.ok || !largeRes.ok) {
-          throw new Error(`API error: preview=${previewRes.status}, small=${smallRes.status}, large=${largeRes.status}`);
+        for (const res of responses) {
+          if (!res.ok) throw new Error(`API returned ${res.status}`);
         }
 
-        const [previewData, smallData, largeData] = await Promise.all([
-          previewRes.json(),
-          smallRes.json(),
-          largeRes.json(),
-        ]);
+        const [preview, small, large] = await Promise.all(
+          responses.map(r => r.json())
+        );
 
-        console.log("[QR] All QR codes fetched, processing...");
+        if (!isMounted) return;
 
-        // Render preview to canvas
-        if (canvasRef.current && previewData.dataUrl) {
-          console.log("[QR] Loading preview image...");
-          const previewImg = await loadImage(previewData.dataUrl, 3000);
-          const ctx = canvasRef.current.getContext("2d")!;
-          canvasRef.current.width = 300;
-          canvasRef.current.height = 300;
-          ctx.drawImage(previewImg, 0, 0);
-          console.log("[QR] Preview rendered");
+        console.log("[QR] QR codes received, creating blobs...");
+
+        // Convert data URLs directly to blob URLs
+        const createBlobUrl = (dataUrl: string) => {
+          const arr = dataUrl.split(",");
+          const mime = arr[0].match(/:(.*?);/)?.[1] || "image/png";
+          const bstr = atob(arr[1]);
+          const n = bstr.length;
+          const u8arr = new Uint8Array(n);
+          for (let i = 0; i < n; i++) {
+            u8arr[i] = bstr.charCodeAt(i);
+          }
+          return URL.createObjectURL(new Blob([u8arr], { type: mime }));
+        };
+
+        const smallUrl = createBlobUrl(small.dataUrl);
+        const largeUrl = createBlobUrl(large.dataUrl);
+
+        // Create print version on canvas
+        let printUrl = largeUrl; // fallback
+        try {
+          const printCanvas = document.createElement("canvas");
+          printCanvas.width = 800;
+          printCanvas.height = 1000;
+
+          const ctx = printCanvas.getContext("2d");
+          if (ctx) {
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillRect(0, 0, 800, 1000);
+
+            // Create image from large QR data URL
+            const img = new Image();
+            img.onload = () => {
+              ctx.drawImage(img, 200, 100, 400, 400);
+              ctx.fillStyle = "#0C0C0B";
+              ctx.textAlign = "center";
+              ctx.font = "bold 48px system-ui, sans-serif";
+              ctx.fillText("Berk-HomeAVM", 400, 600);
+              ctx.fillStyle = "#C9A84C";
+              ctx.font = "28px system-ui, sans-serif";
+              ctx.fillText("berk-homeavm.com", 400, 680);
+              ctx.fillStyle = "#888888";
+              ctx.font = "18px system-ui, sans-serif";
+              ctx.fillText("EVİNİZE DEĞER KATAR", 400, 750);
+            };
+            img.onerror = () => console.warn("[QR] Print canvas image failed, using large QR as fallback");
+            img.src = large.dataUrl;
+
+            printCanvas.toBlob((blob) => {
+              if (blob && isMounted) {
+                printUrl = URL.createObjectURL(blob);
+                updateUrls(smallUrl, largeUrl, printUrl);
+              }
+            }, "image/png");
+          }
+        } catch (e) {
+          console.warn("[QR] Print canvas creation failed:", e);
+          // Continue with large QR as print fallback
+          updateUrls(smallUrl, largeUrl, largeUrl);
         }
 
-        // Convert data URLs to blobs
-        console.log("[QR] Converting to blobs...");
-        const [smallBlob, largeBlob] = await Promise.all([
-          dataUrlToBlob(smallData.dataUrl),
-          dataUrlToBlob(largeData.dataUrl),
-        ]);
-        console.log("[QR] Blobs created");
+        // Also render preview canvas
+        if (canvasRef.current && preview.dataUrl) {
+          const previewImg = new Image();
+          previewImg.onload = () => {
+            const ctx = canvasRef.current?.getContext("2d");
+            if (ctx) {
+              canvasRef.current!.width = 300;
+              canvasRef.current!.height = 300;
+              ctx.drawImage(previewImg, 0, 0);
+            }
+          };
+          previewImg.src = preview.dataUrl;
+        }
 
-        // Build print canvas
-        console.log("[QR] Building print canvas...");
-        const printCanvas = await buildPrintCanvas(largeData.dataUrl);
-        const printBlob = await canvasToBlob(printCanvas);
-        console.log("[QR] Print canvas complete");
+        // Update URLs (might be called twice if print succeeds, but that's fine)
+        function updateUrls(s: string, l: string, p: string) {
+          if (isMounted) {
+            blobUrls.current = [s, l, p];
+            setUrls({ small: s, large: l, print: p });
+            console.log("[QR] Ready!");
+          }
+        }
 
-        // Create object URLs
-        console.log("[QR] Creating object URLs...");
-        const smallUrl = URL.createObjectURL(smallBlob);
-        const largeUrl = URL.createObjectURL(largeBlob);
-        const printUrl = URL.createObjectURL(printBlob);
+        // If print canvas doesn't update within 500ms, use large as fallback
+        setTimeout(() => {
+          if (isMounted && !urls) {
+            updateUrls(smallUrl, largeUrl, largeUrl);
+          }
+        }, 500);
 
-        blobUrls.current = [smallUrl, largeUrl, printUrl];
-        setBlobs({ small: smallBlob, large: largeBlob, print: printBlob });
-        setUrls({ small: smallUrl, large: largeUrl, print: printUrl });
-        console.log("[QR] Success! QR codes ready");
       } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        console.error("[QR] Failed:", errorMsg, err);
-        setDebugError(errorMsg);
+        if (isMounted) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.error("[QR] Error:", msg);
+          setError(msg);
+        }
       }
     };
 
-    generateQRCodes();
+    init();
 
     return () => {
+      isMounted = false;
       blobUrls.current.forEach(URL.revokeObjectURL);
     };
   }, []);
 
   const handleShare = async () => {
-    if (!blobs) return;
+    if (!urls) return;
     setSharing(true);
     try {
-      const file = new File([blobs.small], "berk-homeavm-qr.png", { type: "image/png" });
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "Berk-HomeAVM QR Kod", text: siteUrl });
-      } else if (navigator.share) {
+      if (navigator.share) {
         await navigator.share({ title: "Berk-HomeAVM", url: siteUrl });
       } else {
         await navigator.clipboard.writeText(siteUrl);
@@ -201,10 +192,10 @@ export default function AdminQRPage() {
     <AdminLayout titleKey="adminQR">
       <div className="max-w-sm space-y-6">
 
-        {debugError && (
+        {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-800">
-            <p className="font-bold">Hata oluştu:</p>
-            <p className="mt-1 font-mono text-xs break-all">{debugError}</p>
+            <p className="font-bold">خطا:</p>
+            <p className="mt-1 break-all">{error}</p>
           </div>
         )}
 
