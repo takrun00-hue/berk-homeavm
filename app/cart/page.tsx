@@ -37,11 +37,13 @@ export default function CartPage() {
             key={product.id}
             className="flex items-center gap-4 border rounded-md p-3"
           >
-            <div className="relative w-20 h-20 rounded overflow-hidden shrink-0">
+            <div className="w-20 h-20 rounded overflow-hidden shrink-0 bg-gray-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={product.image}
                 alt={product.name[locale]}
                 className="w-full h-full object-cover"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
               />
             </div>
             <div className="flex-1">

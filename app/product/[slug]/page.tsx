@@ -55,12 +55,18 @@ export default function ProductDetailPage({
 
   return (
     <section className="py-10 px-4 max-w-3xl mx-auto space-y-6">
-      <div className="relative aspect-square rounded-md overflow-hidden">
-        <img
-          src={displayImage}
-          alt={product.name[locale]}
-          className="w-full h-full object-cover transition-opacity duration-300"
-        />
+      <div className="aspect-square rounded-md overflow-hidden bg-gray-100">
+        {displayImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={displayImage}
+            alt={product.name[locale]}
+            className="w-full h-full object-cover transition-opacity duration-300"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-300 text-6xl">🛋️</div>
+        )}
         {discountPct > 0 && (
           <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
             %{discountPct} İNDİRİM
@@ -80,7 +86,9 @@ export default function ProductDetailPage({
               title="Varsayılan"
             >
               <div className="relative w-full h-full">
-                <img src={product.image} alt="default" className="w-full h-full object-cover" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={product.image} alt="default" className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
               </div>
             </button>
             {product.variants.map((v, i) => (
