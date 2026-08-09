@@ -30,26 +30,11 @@ export default function CategoriesSection() {
             <Link
               key={cat.id}
               href={`/products?category=${cat.slug}`}
-              className="group relative overflow-hidden rounded-xl aspect-square bg-gray-100 shadow-sm"
+              className="group flex items-center justify-center rounded-xl aspect-square bg-gray-800 hover:bg-black shadow-sm transition-colors"
             >
-              {cat.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={cat.image}
-                  alt={cat.name[locale]}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400 text-4xl">
-                  🛋️
-                </div>
-              )}
-              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors" />
-              <div className="absolute inset-0 flex items-end p-4">
-                <span className="text-white font-extrabold text-sm md:text-base drop-shadow">
-                  {cat.name[locale]}
-                </span>
-              </div>
+              <span className="text-white font-extrabold text-sm md:text-base text-center px-3">
+                {cat.name[locale]}
+              </span>
             </Link>
           ))}
         </div>

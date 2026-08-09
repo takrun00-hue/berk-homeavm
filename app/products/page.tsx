@@ -48,20 +48,12 @@ function ProductsContent() {
             <Link
               key={cat.id}
               href={`/products?category=${cat.slug}`}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+              className={`px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
                 categorySlug === cat.slug
                   ? "bg-black text-gold"
                   : "text-gray-600 hover:bg-gray-100"
               }`}
             >
-              {cat.image && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={cat.image}
-                  alt={cat.name[locale]}
-                  className="w-6 h-6 rounded-full object-cover shrink-0"
-                />
-              )}
               {cat.name[locale]}
             </Link>
           ))}
