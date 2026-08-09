@@ -31,7 +31,9 @@ export default function AdminLayout({
     | "adminPayment"
     | "adminUpload"
     | "adminSocial"
-    | "adminQR";
+    | "adminQR"
+    | "adminAnalytics"
+    | "adminUsers";
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
