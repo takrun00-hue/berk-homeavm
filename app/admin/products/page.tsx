@@ -61,6 +61,7 @@ export default function AdminProductsPage() {
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
   const [variantUploading, setVariantUploading] = useState<number | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { locale, t } = useLanguage();
 
   const load = () => {
@@ -106,6 +107,8 @@ export default function AdminProductsPage() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setImagePreview(URL.createObjectURL(file));
     setUploading(true);
     try {
       const resizedBlob = await resizeImage(file);
@@ -342,10 +345,13 @@ export default function AdminProductsPage() {
               className="w-full border rounded-md px-3 py-2 text-sm"
             />
             {uploading && <p className="text-xs text-gray-500">{t("adminUploading")}</p>}
-            {form.image && (
-              <div className="relative w-24 h-24 rounded-md overflow-hidden border">
-                <Image src={form.image} alt="preview" fill className="object-cover" />
-              </div>
+            {(imagePreview || form.image) && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={imagePreview || form.image}
+                alt="preview"
+                className="w-24 h-24 rounded-md object-cover border"
+              />
             )}
           </div>
 

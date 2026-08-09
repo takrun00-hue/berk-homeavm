@@ -58,6 +58,10 @@ export default function AdminHeroPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Show local preview immediately
+    const localUrl = URL.createObjectURL(file);
+    setHeroPreview(localUrl);
+
     setUploadingHero(true);
     setError("");
 
@@ -71,11 +75,11 @@ export default function AdminHeroPage() {
       if (data.url) {
         const fileName = file.name;
         setHeroUploadedImages([
-          { url: data.url, name: fileName },
+          { url: localUrl, name: fileName },
           ...heroUploadedImages
         ]);
         setHeroUrl(data.url);
-        setHeroPreview(data.url);
+        setHeroPreview(localUrl);
         setSaved(false);
       } else {
         setError(data.error || "Resim yüklenemedi");
@@ -120,11 +124,11 @@ export default function AdminHeroPage() {
             <div className="space-y-2 bg-white border rounded-md p-4">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Şu Anki Arka Plan</p>
               <div className="relative w-full h-48 bg-gray-100 rounded border overflow-hidden">
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={heroPreview}
                   alt="Hero background"
-                  fill
-                  className="object-cover"
+                  className="w-full h-full object-cover"
                 />
               </div>
             </div>
@@ -181,11 +185,11 @@ export default function AdminHeroPage() {
                       }`}
                       title={img.name}
                     >
-                      <Image
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
                         src={img.url}
                         alt={img.name}
-                        fill
-                        className="object-cover"
+                        className="w-full h-full object-cover"
                       />
                       {heroUrl === img.url && (
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center">

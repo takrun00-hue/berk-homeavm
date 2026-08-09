@@ -22,6 +22,7 @@ export default function AdminCategoriesPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { locale, t } = useLanguage();
 
   const load = () => {
@@ -75,6 +76,9 @@ export default function AdminCategoriesPage() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Show local preview immediately
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(URL.createObjectURL(file));
     setUploading(true);
     setError("");
     try {
@@ -205,15 +209,13 @@ export default function AdminCategoriesPage() {
             {uploading && (
               <p className="text-xs text-gray-500">{t("adminUploading")}</p>
             )}
-            {form.image && (
+            {(previewUrl || form.image) && (
               <div className="space-y-1">
-                <p className="text-xs text-green-600">✓ Görsel yüklendi</p>
+                {form.image && <p className="text-xs text-green-600">✓ Görsel yüklendi</p>}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={form.image}
+                  src={previewUrl || form.image}
                   alt="preview"
-                  width={96}
-                  height={96}
                   className="w-24 h-24 rounded-md object-cover border"
                 />
               </div>
