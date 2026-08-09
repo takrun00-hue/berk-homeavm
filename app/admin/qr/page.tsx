@@ -131,6 +131,10 @@ export default function AdminQRPage() {
         setUrls({ small: su, large: lu, print: pu });
       } catch (err) {
         console.error("QR code generation failed:", err);
+        if (err instanceof Error) {
+          console.error("Error message:", err.message);
+          console.error("Error stack:", err.stack);
+        }
       }
     };
 
