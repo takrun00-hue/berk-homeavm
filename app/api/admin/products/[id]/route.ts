@@ -1,6 +1,7 @@
 import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { checkAdmin } from "@/lib/checkAdmin";
+import { syncProducts } from "@/lib/syncProducts";
 
 export async function PUT(
   req: NextRequest,
@@ -42,6 +43,7 @@ export async function PUT(
     WHERE id = ${params.id}
   `;
 
+  syncProducts();
   return NextResponse.json({ success: true });
 }
 
@@ -53,5 +55,6 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   await pool.sql`DELETE FROM products WHERE id = ${params.id}`;
+  syncProducts();
   return NextResponse.json({ success: true });
 }

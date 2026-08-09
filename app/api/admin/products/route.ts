@@ -1,6 +1,7 @@
 import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { checkAdmin } from "@/lib/checkAdmin";
+import { syncProducts } from "@/lib/syncProducts";
 
 export async function GET(req: NextRequest) {
   if (!checkAdmin(req))
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
       INSERT INTO products (slug, name_tr, name_en, category_id, price_min, price_max, image, description_tr, description_en, sort_order, discount_percent, variants)
       VALUES (${slug}, ${name_tr}, ${name_en}, ${category_id || null}, ${price_min}, ${price_max}, ${image}, ${description_tr || ""}, ${description_en || ""}, ${nextOrder}, ${discountPct}, ${variantsJson})
     `;
+    syncProducts();
     return NextResponse.json({ success: true });
   } catch (e) {
     return NextResponse.json(
