@@ -4,25 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import { Download, Printer, Share2, Copy, Check } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 
-const getSiteUrl = () => {
-  if (typeof window === "undefined") return "https://berk-homeavm.com";
-  const { protocol, hostname, port } = window.location;
-  const portStr = port ? `:${port}` : "";
-  return `${protocol}//${hostname}${portStr}`;
-};
+const QR_URL = "https://berk-homeavm.com";
 
 export default function AdminQRPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const blobUrls = useRef<string[]>([]);
-  const [siteUrl, setSiteUrl] = useState("https://berk-homeavm.com");
   const [urls, setUrls] = useState<{ small: string; large: string; print: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const url = getSiteUrl();
-    setSiteUrl(url);
+    const url = QR_URL;
     let isMounted = true;
 
     const init = async () => {
@@ -172,16 +165,16 @@ export default function AdminQRPage() {
     setSharing(true);
     try {
       if (navigator.share) {
-        await navigator.share({ title: "Berk-HomeAVM", url: siteUrl });
+        await navigator.share({ title: "Berk-HomeAVM", url: QR_URL });
       } else {
-        await navigator.clipboard.writeText(siteUrl);
-        alert("Adres kopyalandı: " + siteUrl);
+        await navigator.clipboard.writeText(QR_URL);
+        alert("Adres kopyalandı: " + QR_URL);
       }
     } catch { /* cancelled */ } finally { setSharing(false); }
   };
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(siteUrl);
+    await navigator.clipboard.writeText(QR_URL);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -205,7 +198,7 @@ export default function AdminQRPage() {
             <canvas ref={canvasRef} className="block" style={{ imageRendering: "pixelated" }} />
           </div>
           <div className="text-center">
-            <p className="font-bold text-sm">{siteUrl}</p>
+            <p className="font-bold text-sm">{QR_URL}</p>
             <p className="text-xs text-gray-400 mt-1">Kamerayı tutun ve siteye gidin</p>
           </div>
         </div>
@@ -273,7 +266,7 @@ export default function AdminQRPage() {
         )}
 
         <p className="text-xs text-gray-400 text-center">
-          QR kodu <span className="font-bold text-gray-600">{new URL(siteUrl).hostname}</span> adresine yönlendirir.
+          QR kodu <span className="font-bold text-gray-600">{new URL(QR_URL).hostname}</span> adresine yönlendirir.
         </p>
       </div>
     </AdminLayout>
