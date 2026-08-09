@@ -3,22 +3,27 @@
 import { useEffect, useRef, useState } from "react";
 import { Download, Printer, Share2, Copy, Check } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
-import { generateQR, renderQRToCanvas } from "@/lib/qrgen";
+import QRCode from "qrcode";
 
 const SITE_URL = "https://berk-homeavm.com";
 
-function buildPrintCanvas(matrix: number[][]): HTMLCanvasElement {
-  const MP = 20, QZ = 6, N = matrix.length;
-  const QS = (N + QZ * 2) * MP;
+const QR_OPTS = {
+  errorCorrectionLevel: "M" as const,
+  margin: 4,
+  color: { dark: "#000000", light: "#FFFFFF" },
+};
+
+async function buildPrintCanvas(): Promise<HTMLCanvasElement> {
+  const QS = 480;
   const PW = QS + 80, PH = QS + 200;
+  const qrCanvas = document.createElement("canvas");
+  await QRCode.toCanvas(qrCanvas, SITE_URL, { ...QR_OPTS, width: QS });
   const off = document.createElement("canvas");
   off.width = PW; off.height = PH;
   const ctx = off.getContext("2d")!;
   ctx.fillStyle = "#FFFFFF";
   ctx.fillRect(0, 0, PW, PH);
-  const qrOff = document.createElement("canvas");
-  renderQRToCanvas(matrix, qrOff, MP, QZ, "#000000", "#FFFFFF");
-  ctx.drawImage(qrOff, (PW - QS) / 2, 60);
+  ctx.drawImage(qrCanvas, (PW - QS) / 2, 60);
   ctx.fillStyle = "#0C0C0B"; ctx.textAlign = "center";
   ctx.font = "bold 28px system-ui, sans-serif";
   ctx.fillText("Berk-HomeAVM", PW / 2, QS + 100);
@@ -35,38 +40,37 @@ const canvasToBlob = (canvas: HTMLCanvasElement): Promise<Blob> =>
 export default function AdminQRPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const blobUrls = useRef<string[]>([]);
-  const [matrix, setMatrix] = useState<number[][] | null>(null);
   const [blobs, setBlobs] = useState<{ small: Blob; large: Blob; print: Blob } | null>(null);
   const [urls, setUrls] = useState<{ small: string; large: string; print: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
-    setMatrix(generateQR(SITE_URL));
     return () => { blobUrls.current.forEach(URL.revokeObjectURL); };
   }, []);
 
   useEffect(() => {
-    if (!matrix) return;
-    if (canvasRef.current) renderQRToCanvas(matrix, canvasRef.current, 10, 4, "#0C0C0B", "#FFFFFF");
+    if (!canvasRef.current) return;
 
     const small = document.createElement("canvas");
-    renderQRToCanvas(matrix, small, 16, 4, "#000000", "#FFFFFF");
     const large = document.createElement("canvas");
-    renderQRToCanvas(matrix, large, 24, 4, "#000000", "#FFFFFF");
-    const print = buildPrintCanvas(matrix);
 
-    Promise.all([canvasToBlob(small), canvasToBlob(large), canvasToBlob(print)]).then(
-      ([sb, lb, pb]) => {
-        const su = URL.createObjectURL(sb);
-        const lu = URL.createObjectURL(lb);
-        const pu = URL.createObjectURL(pb);
-        blobUrls.current = [su, lu, pu];
-        setBlobs({ small: sb, large: lb, print: pb });
-        setUrls({ small: su, large: lu, print: pu });
-      }
-    );
-  }, [matrix]);
+    Promise.all([
+      QRCode.toCanvas(canvasRef.current, SITE_URL, { ...QR_OPTS, width: 330 }),
+      QRCode.toCanvas(small, SITE_URL, { ...QR_OPTS, width: 320 }),
+      QRCode.toCanvas(large, SITE_URL, { ...QR_OPTS, width: 480 }),
+      buildPrintCanvas(),
+    ]).then(([, , , printCanvas]) =>
+      Promise.all([canvasToBlob(small), canvasToBlob(large), canvasToBlob(printCanvas as HTMLCanvasElement)])
+    ).then(([sb, lb, pb]) => {
+      const su = URL.createObjectURL(sb);
+      const lu = URL.createObjectURL(lb);
+      const pu = URL.createObjectURL(pb);
+      blobUrls.current = [su, lu, pu];
+      setBlobs({ small: sb, large: lb, print: pb });
+      setUrls({ small: su, large: lu, print: pu });
+    });
+  }, []);
 
   const handleShare = async () => {
     if (!blobs) return;
