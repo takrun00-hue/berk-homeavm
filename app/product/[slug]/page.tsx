@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { formatPrice } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
@@ -57,11 +56,10 @@ export default function ProductDetailPage({
   return (
     <section className="py-10 px-4 max-w-3xl mx-auto space-y-6">
       <div className="relative aspect-square rounded-md overflow-hidden">
-        <Image
+        <img
           src={displayImage}
           alt={product.name[locale]}
-          fill
-          className="object-cover transition-opacity duration-300"
+          className="w-full h-full object-cover transition-opacity duration-300"
         />
         {discountPct > 0 && (
           <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
@@ -82,7 +80,7 @@ export default function ProductDetailPage({
               title="Varsayılan"
             >
               <div className="relative w-full h-full">
-                <Image src={product.image} alt="default" fill className="object-cover" />
+                <img src={product.image} alt="default" className="w-full h-full object-cover" />
               </div>
             </button>
             {product.variants.map((v, i) => (

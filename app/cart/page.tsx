@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
@@ -39,11 +38,10 @@ export default function CartPage() {
             className="flex items-center gap-4 border rounded-md p-3"
           >
             <div className="relative w-20 h-20 rounded overflow-hidden shrink-0">
-              <Image
+              <img
                 src={product.image}
                 alt={product.name[locale]}
-                fill
-                className="object-cover"
+                className="w-full h-full object-cover"
               />
             </div>
             <div className="flex-1">
