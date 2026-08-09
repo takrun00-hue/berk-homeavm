@@ -50,6 +50,17 @@ async function buildCategoriesJson() {
   return JSON.stringify({ categories });
 }
 
+async function triggerVercelDeploy() {
+  const hookUrl = process.env.VERCEL_DEPLOY_HOOK_URL;
+  if (!hookUrl) return;
+  try {
+    await fetch(hookUrl, { method: "POST" });
+    console.log("[syncProducts] Vercel deploy hook triggered → rebuild starting");
+  } catch (err) {
+    console.error("[syncProducts] deploy hook error:", err);
+  }
+}
+
 function gitPush() {
   // Only push when running locally in dev mode
   if (process.env.VERCEL) return;
@@ -79,7 +90,11 @@ export async function syncProducts() {
 
     console.log("[syncProducts] static files updated");
 
-    gitPush();
+    if (process.env.VERCEL) {
+      await triggerVercelDeploy();
+    } else {
+      gitPush();
+    }
   } catch (err) {
     console.error("[syncProducts] error:", err);
   }
