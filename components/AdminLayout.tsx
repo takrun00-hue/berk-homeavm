@@ -77,7 +77,6 @@ export default function AdminLayout({
     { href: "/admin/users", labelKey: "adminUsers" as const, icon: Users },
     { href: "/admin/qr", labelKey: "adminQR" as const, icon: QrCode },
     { href: "/admin/analytics", labelKey: "adminAnalytics" as const, icon: BarChart2 },
-    { href: "/admin/upload", labelKey: "adminUpload" as const, icon: ImageUp },
   ];
 
   const handleLogout = async () => {
