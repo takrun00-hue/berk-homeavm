@@ -8,7 +8,7 @@ const QR_URL = "https://berk-homeavm.com";
 
 export default function AdminQRPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const blobUrls = useRef<string[]>([]);
+  const previewDataUrl = useRef<string>("");
   const [urls, setUrls] = useState<{ small: string; large: string; print: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -23,7 +23,6 @@ export default function AdminQRPage() {
         console.log("[QR] Initializing QR codes for:", url);
 
         // Fetch all QR codes
-        console.log("[QR] Fetching QR codes...");
         const responses = await Promise.all([
           fetch("/api/admin/qr-code", {
             method: "POST",
@@ -52,9 +51,9 @@ export default function AdminQRPage() {
 
         if (!isMounted) return;
 
-        console.log("[QR] QR codes received, creating blobs...");
+        console.log("[QR] QR codes received, creating download links...");
 
-        // Convert data URLs directly to blob URLs
+        // Convert data URLs to blob URLs for download
         const createBlobUrl = (dataUrl: string) => {
           const arr = dataUrl.split(",");
           const mime = arr[0].match(/:(.*?);/)?.[1] || "image/png";
@@ -69,79 +68,38 @@ export default function AdminQRPage() {
 
         const smallUrl = createBlobUrl(small.dataUrl);
         const largeUrl = createBlobUrl(large.dataUrl);
+        const printUrl = createBlobUrl(large.dataUrl); // Use large QR for print
 
-        // Create print version on canvas
-        let printUrl = largeUrl; // fallback
-        try {
-          const printCanvas = document.createElement("canvas");
-          printCanvas.width = 800;
-          printCanvas.height = 1000;
+        // Store preview data URL for canvas rendering
+        previewDataUrl.current = preview.dataUrl;
 
-          const ctx = printCanvas.getContext("2d");
-          if (ctx) {
-            ctx.fillStyle = "#FFFFFF";
-            ctx.fillRect(0, 0, 800, 1000);
-
-            // Create image from large QR data URL
-            const img = new Image();
-            img.onload = () => {
-              ctx.drawImage(img, 200, 100, 400, 400);
-              ctx.fillStyle = "#0C0C0B";
-              ctx.textAlign = "center";
-              ctx.font = "bold 48px system-ui, sans-serif";
-              ctx.fillText("Berk-HomeAVM", 400, 600);
-              ctx.fillStyle = "#C9A84C";
-              ctx.font = "28px system-ui, sans-serif";
-              ctx.fillText("berk-homeavm.com", 400, 680);
-              ctx.fillStyle = "#888888";
-              ctx.font = "18px system-ui, sans-serif";
-              ctx.fillText("EVİNİZE DEĞER KATAR", 400, 750);
-            };
-            img.onerror = () => console.warn("[QR] Print canvas image failed, using large QR as fallback");
-            img.src = large.dataUrl;
-
-            printCanvas.toBlob((blob) => {
-              if (blob && isMounted) {
-                printUrl = URL.createObjectURL(blob);
-                updateUrls(smallUrl, largeUrl, printUrl);
-              }
-            }, "image/png");
-          }
-        } catch (e) {
-          console.warn("[QR] Print canvas creation failed:", e);
-          // Continue with large QR as print fallback
-          updateUrls(smallUrl, largeUrl, largeUrl);
+        // Set download URLs immediately (no canvas dependency)
+        if (isMounted) {
+          setUrls({ small: smallUrl, large: largeUrl, print: printUrl });
+          console.log("[QR] Ready for download");
         }
 
-        // Also render preview canvas
-        if (canvasRef.current && preview.dataUrl) {
-          const previewImg = new Image();
-          previewImg.onload = () => {
-            const ctx = canvasRef.current?.getContext("2d");
-            if (ctx) {
-              canvasRef.current!.width = 300;
-              canvasRef.current!.height = 300;
-              ctx.drawImage(previewImg, 0, 0);
+        // Render preview canvas asynchronously (non-blocking)
+        if (isMounted && canvasRef.current) {
+          setTimeout(() => {
+            if (canvasRef.current && previewDataUrl.current) {
+              const img = new Image();
+              img.onload = () => {
+                const ctx = canvasRef.current?.getContext("2d");
+                if (ctx && isMounted) {
+                  canvasRef.current!.width = 300;
+                  canvasRef.current!.height = 300;
+                  ctx.drawImage(img, 0, 0, 300, 300);
+                  console.log("[QR] Preview rendered");
+                }
+              };
+              img.onerror = () => {
+                console.error("[QR] Failed to render preview canvas, but downloads still work");
+              };
+              img.src = previewDataUrl.current;
             }
-          };
-          previewImg.src = preview.dataUrl;
+          }, 0);
         }
-
-        // Update URLs (might be called twice if print succeeds, but that's fine)
-        function updateUrls(s: string, l: string, p: string) {
-          if (isMounted) {
-            blobUrls.current = [s, l, p];
-            setUrls({ small: s, large: l, print: p });
-            console.log("[QR] Ready!");
-          }
-        }
-
-        // If print canvas doesn't update within 500ms, use large as fallback
-        setTimeout(() => {
-          if (isMounted && !urls) {
-            updateUrls(smallUrl, largeUrl, largeUrl);
-          }
-        }, 500);
 
       } catch (err) {
         if (isMounted) {
@@ -156,9 +114,13 @@ export default function AdminQRPage() {
 
     return () => {
       isMounted = false;
-      blobUrls.current.forEach(URL.revokeObjectURL);
+      if (urls) {
+        URL.revokeObjectURL(urls.small);
+        URL.revokeObjectURL(urls.large);
+        URL.revokeObjectURL(urls.print);
+      }
     };
-  }, []);
+  }, [urls]);
 
   const handleShare = async () => {
     if (!urls) return;
