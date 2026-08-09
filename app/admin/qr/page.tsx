@@ -64,48 +64,73 @@ export default function AdminQRPage() {
 
     const generateQRCodes = async () => {
       try {
-        const previewUrl = await QRCode.toDataURL(url, {
-          errorCorrectionLevel: "H",
-          type: "image/png",
-          width: 300,
-          margin: 1,
-          color: { dark: "#0C0C0B", light: "#FFFFFF" },
-        });
+        console.log("Starting QR code generation for URL:", url);
+        console.log("QRCode object:", QRCode);
+        console.log("QRCode.toDataURL:", QRCode.toDataURL);
 
+        // Generate preview QR code
+        if (canvasRef.current) {
+          console.log("Rendering preview canvas...");
+          console.log("Calling QRCode.toDataURL...");
+          const previewUrl = await QRCode.toDataURL(url, {
+            errorCorrectionLevel: "H",
+            width: 300,
+            margin: 1,
+            color: { dark: "#0C0C0B", light: "#FFFFFF" },
+          });
+          const previewImg = new Image();
+          await new Promise<void>((resolve) => {
+            previewImg.onload = () => resolve();
+            previewImg.src = previewUrl;
+          });
+          const ctx = canvasRef.current.getContext("2d")!;
+          ctx.canvas.width = 300;
+          ctx.canvas.height = 300;
+          ctx.drawImage(previewImg, 0, 0);
+        }
+
+        // Generate small QR code
         const smallUrl = await QRCode.toDataURL(url, {
           errorCorrectionLevel: "H",
-          type: "image/png",
           width: 320,
           margin: 2,
           color: { dark: "#000000", light: "#FFFFFF" },
         });
+        const smallImg = new Image();
+        await new Promise<void>((resolve) => {
+          smallImg.onload = () => resolve();
+          smallImg.src = smallUrl;
+        });
+        const smallCanvas = document.createElement("canvas");
+        smallCanvas.width = 320;
+        smallCanvas.height = 320;
+        smallCanvas.getContext("2d")!.drawImage(smallImg, 0, 0);
+        const smallBlob = await canvasToBlob(smallCanvas);
 
-        const largeUrl = await QRCode.toDataURL(url, {
+        // Generate large QR code
+        const largeDataUrl = await QRCode.toDataURL(url, {
           errorCorrectionLevel: "H",
-          type: "image/png",
           width: 480,
           margin: 2,
           color: { dark: "#000000", light: "#FFFFFF" },
         });
+        const largeImg = new Image();
+        await new Promise<void>((resolve) => {
+          largeImg.onload = () => resolve();
+          largeImg.src = largeDataUrl;
+        });
+        const largeCanvas = document.createElement("canvas");
+        largeCanvas.width = 480;
+        largeCanvas.height = 480;
+        largeCanvas.getContext("2d")!.drawImage(largeImg, 0, 0);
+        const largeBlob = await canvasToBlob(largeCanvas);
 
-        if (canvasRef.current) {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = canvasRef.current!;
-            const ctx = canvas.getContext("2d")!;
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0, img.width, img.height);
-          };
-          img.src = previewUrl;
-        }
-
-        const smallBlob = await (await fetch(smallUrl)).blob();
-        const largeBlob = await (await fetch(largeUrl)).blob();
-
+        // Generate print version with branding
+        const largeUrl = URL.createObjectURL(largeBlob);
         const printCanvas = await buildPrintCanvas(largeUrl);
         const printBlob = await canvasToBlob(printCanvas);
 
+        // Create object URLs for downloads
         const su = URL.createObjectURL(smallBlob);
         const lu = URL.createObjectURL(largeBlob);
         const pu = URL.createObjectURL(printBlob);
@@ -113,6 +138,10 @@ export default function AdminQRPage() {
         blobUrls.current = [su, lu, pu];
         setBlobs({ small: smallBlob, large: largeBlob, print: printBlob });
         setUrls({ small: su, large: lu, print: pu });
+
+        // Clean up temporary blob URL
+        URL.revokeObjectURL(largeUrl);
+        console.log("QR code generation completed successfully");
       } catch (err) {
         console.error("QR code generation failed:", err);
       }

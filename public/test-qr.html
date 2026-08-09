@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QRCode Test</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode.js/1.5.4/qrcode.min.js"></script>
+</head>
+<body>
+  <h1>QRCode Library Test</h1>
+  <canvas id="canvas"></canvas>
+  <p id="status">Loading...</p>
+
+  <script>
+    async function testQR() {
+      try {
+        const canvas = document.getElementById('canvas');
+
+        // Try using the CDN version directly
+        if (typeof QRCode !== 'undefined') {
+          new QRCode(canvas, {
+            text: "https://berk-homeavm.com",
+            width: 300,
+            height: 300,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+          });
+          document.getElementById('status').textContent = '✓ QR Code generated successfully!';
+        } else {
+          document.getElementById('status').textContent = '✗ QRCode library not loaded';
+        }
+      } catch (error) {
+        document.getElementById('status').textContent = '✗ Error: ' + error.message;
+      }
+    }
+
+    // Try the npm qrcode module approach
+    try {
+      // This simulates what the Next.js app is doing
+      console.log('Testing npm qrcode module...');
+
+      // Since we can't use import in a plain script, we test the installed library
+      const canvas2 = document.createElement('canvas');
+      canvas2.id = 'canvas2';
+      document.body.appendChild(canvas2);
+
+      fetch('/_next/data/development/admin/qr.json')
+        .then(r => r.json())
+        .then(data => {
+          console.log('Page data loaded:', data);
+        })
+        .catch(e => {
+          console.log('Could not fetch page data:', e.message);
+        });
+    } catch (error) {
+      console.error('Setup error:', error);
+    }
+
+    // Test after a delay
+    setTimeout(testQR, 500);
+  </script>
+</body>
+</html>
