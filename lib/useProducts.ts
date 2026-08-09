@@ -9,7 +9,8 @@ export function useProducts() {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      // Try live API first so new products appear immediately
+      // Try live API first — only accept if it returns at least 1 product
+      // (an empty response likely means a DB error, not a truly empty catalog)
       try {
         const res = await fetch(`/api/products?t=${Date.now()}`, {
           cache: "no-store",
@@ -17,14 +18,14 @@ export function useProducts() {
         });
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data.products)) {
+          if (Array.isArray(data.products) && data.products.length > 0) {
             setProducts(data.products);
             return;
           }
         }
       } catch {}
 
-      // Fallback to static JSON (works when API routes are unavailable)
+      // Fall back to static JSON baked at build time
       try {
         const res = await fetch(`/data/products.json?t=${Date.now()}`, {
           cache: "no-store",

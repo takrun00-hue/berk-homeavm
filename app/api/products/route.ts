@@ -28,7 +28,7 @@ export async function GET() {
       console.error("[/api/products] Simple query also failed:", err2);
       return NextResponse.json(
         { products: [], error: String(err2) },
-        { headers: { "Cache-Control": "no-store, max-age=0" } }
+        { status: 500, headers: { "Cache-Control": "no-store, max-age=0" } }
       );
     }
   }

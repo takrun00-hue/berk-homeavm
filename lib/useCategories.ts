@@ -9,7 +9,7 @@ export function useCategories() {
 
   useEffect(() => {
     const fetchCategories = async () => {
-      // Try live API first so new categories appear immediately
+      // Try live API first — only accept if it returns at least 1 category
       try {
         const res = await fetch(`/api/categories?t=${Date.now()}`, {
           cache: "no-store",
@@ -17,14 +17,14 @@ export function useCategories() {
         });
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data.categories)) {
+          if (Array.isArray(data.categories) && data.categories.length > 0) {
             setCategories(data.categories);
             return;
           }
         }
       } catch {}
 
-      // Fallback to static JSON (works when API routes are unavailable)
+      // Fall back to static JSON baked at build time
       try {
         const res = await fetch(`/data/categories.json?t=${Date.now()}`, {
           cache: "no-store",
