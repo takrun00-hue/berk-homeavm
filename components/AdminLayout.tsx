@@ -14,6 +14,7 @@ import {
   LogOut,
   Menu,
   X,
+  QrCode,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -29,7 +30,8 @@ export default function AdminLayout({
     | "adminContact"
     | "adminPayment"
     | "adminUpload"
-    | "adminSocial";
+    | "adminSocial"
+    | "adminQR";
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -60,8 +62,9 @@ export default function AdminLayout({
     { href: "/admin/categories", labelKey: "adminCategories" as const, icon: Tags },
     { href: "/admin/settings", labelKey: "adminContact" as const, icon: Phone },
     { href: "/admin/payment", labelKey: "adminPayment" as const, icon: CreditCard },
-    { href: "/admin/social", labelKey: "adminSocial" as const, icon: Share2 },
     { href: "/admin/upload", labelKey: "adminUpload" as const, icon: ImageUp },
+    { href: "/admin/social", labelKey: "adminSocial" as const, icon: Share2 },
+    { href: "/admin/qr", labelKey: "adminQR" as const, icon: QrCode },
   ];
 
   const handleLogout = async () => {
