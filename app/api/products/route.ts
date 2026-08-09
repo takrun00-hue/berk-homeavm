@@ -10,14 +10,14 @@ export async function GET() {
       SELECT p.*, c.name_tr as cat_tr, c.name_en as cat_en
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      ORDER BY COALESCE(p.sort_order, 0) ASC
+      ORDER BY COALESCE(p.sort_order, 0) ASC, p.id ASC
     `;
 
     const products = rows.map((r) => ({
       id: String(r.id),
       slug: r.slug,
       name: { tr: r.name_tr || "", en: r.name_en || "" },
-      category: { tr: r.cat_tr || "", en: r.cat_en || "" },
+      category: { tr: r.cat_tr || "", en: r.cat_en || r.cat_tr || "" },
       priceMin: Number(r.price_min) || 0,
       priceMax: Number(r.price_max) || 0,
       image: r.image || "",
