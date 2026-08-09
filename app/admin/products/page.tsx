@@ -42,8 +42,7 @@ const emptyForm = {
   name_tr: "",
   name_en: "",
   category_id: "",
-  price_min: "",
-  price_max: "",
+  price: "",
   image: "",
   description_tr: "",
   description_en: "",
@@ -173,8 +172,8 @@ export default function AdminProductsPage() {
       name_tr: form.name_tr,
       name_en: form.name_en,
       category_id: form.category_id ? Number(form.category_id) : null,
-      price_min: Number(form.price_min),
-      price_max: Number(form.price_max),
+      price_min: Number(form.price),
+      price_max: Number(form.price),
       image: form.image,
       description_tr: form.description_tr,
       description_en: form.description_en,
@@ -209,8 +208,7 @@ export default function AdminProductsPage() {
       name_tr: p.name_tr,
       name_en: p.name_en,
       category_id: p.category_id ? String(p.category_id) : "",
-      price_min: String(p.price_min),
-      price_max: String(p.price_max),
+      price: String(p.price_min),
       image: p.image,
       description_tr: p.description_tr || "",
       description_en: p.description_en || "",
@@ -282,26 +280,15 @@ export default function AdminProductsPage() {
             ))}
           </select>
 
-          <div className="flex gap-2">
-            <input
-              name="price_min"
-              type="number"
-              placeholder={t("adminMinPrice")}
-              value={form.price_min}
-              onChange={handleChange}
-              required
-              className="w-1/2 border rounded-md px-3 py-2 text-sm"
-            />
-            <input
-              name="price_max"
-              type="number"
-              placeholder={t("adminMaxPrice")}
-              value={form.price_max}
-              onChange={handleChange}
-              required
-              className="w-1/2 border rounded-md px-3 py-2 text-sm"
-            />
-          </div>
+          <input
+            name="price"
+            type="number"
+            placeholder="Fiyat (₺)"
+            value={form.price}
+            onChange={handleChange}
+            required
+            className="w-full border rounded-md px-3 py-2 text-sm"
+          />
 
           <textarea
             name="description_tr"
