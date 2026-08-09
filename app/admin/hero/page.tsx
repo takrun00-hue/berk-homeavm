@@ -18,11 +18,21 @@ export default function AdminHeroPage() {
   const { t } = useLanguage();
 
   useEffect(() => {
+    let isMounted = true;
+    const timeoutId = setTimeout(() => {
+      if (isMounted) {
+        setLoading(false);
+        setError("Bağlantı zaman aşımı");
+      }
+    }, 5000);
+
     fetch("/api/admin/settings")
       .then(r => r.json())
       .then(d => {
+        if (!isMounted) return;
+        clearTimeout(timeoutId);
         if (d.error) {
-          setError(d.error);
+          setError(d.error === "Unauthorized" ? "Giriş yapmanız gerekiyor" : d.error);
           setLoading(false);
           return;
         }
@@ -32,9 +42,16 @@ export default function AdminHeroPage() {
         setLoading(false);
       })
       .catch(err => {
+        if (!isMounted) return;
+        clearTimeout(timeoutId);
         setError("Ayarlar yüklenemedi: " + (err instanceof Error ? err.message : "Bilinmeyen hata"));
         setLoading(false);
       });
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleHeroImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,6 +111,7 @@ export default function AdminHeroPage() {
   return (
     <AdminLayout titleKey="adminHero">
       <div className="max-w-2xl space-y-4">
+        {error && <div className="bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-800">{error}</div>}
         {loading ? (
           <p className="text-sm text-gray-500">{t("loading")}</p>
         ) : (
@@ -199,7 +217,6 @@ export default function AdminHeroPage() {
             </div>
 
             {/* Messages */}
-            {error && <div className="bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-800">{error}</div>}
             {saved && <div className="bg-green-50 border border-green-200 rounded-md p-3 text-sm text-green-800">✓ Kaydedildi</div>}
 
             {/* Save Button */}
