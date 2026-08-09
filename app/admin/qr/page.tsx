@@ -48,6 +48,18 @@ async function buildPrintCanvas(qrDataUrl: string): Promise<HTMLCanvasElement> {
 const canvasToBlob = (canvas: HTMLCanvasElement): Promise<Blob> =>
   new Promise((res) => canvas.toBlob((b) => res(b!), "image/png"));
 
+const dataUrlToBlob = async (dataUrl: string): Promise<Blob> => {
+  const arr = dataUrl.split(",");
+  const mime = arr[0].match(/:(.*?);/)![1];
+  const bstr = atob(arr[1]);
+  const n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    u8arr[i] = bstr.charCodeAt(i);
+  }
+  return new Blob([u8arr], { type: mime });
+};
+
 export default function AdminQRPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const blobUrls = useRef<string[]>([]);
@@ -63,32 +75,22 @@ export default function AdminQRPage() {
 
     const generateQRCodes = async () => {
       try {
-        console.log("Starting QR generation");
-        // Load qrcode library dynamically to avoid import issues
-        console.log("About to import qrcode library");
-        let QRCode: any;
-        try {
-          QRCode = (await import("qrcode")).default;
-          console.log("QRCode imported successfully:", !!QRCode);
-        } catch (importErr) {
-          console.error("Failed to import qrcode:", importErr);
-          throw importErr;
-        }
+        console.log("Generating QR codes for:", url);
+        // Generate QR codes via API
+        const previewRes = await fetch("/api/admin/qr-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url, size: 300, type: "preview" }),
+        });
+        if (!previewRes.ok) throw new Error(`API error: ${previewRes.status}`);
+        const previewData = await previewRes.json();
+        console.log("Preview QR generated");
 
-        // Generate preview QR code
-        if (canvasRef.current) {
-          console.log("Generating preview QR...");
-          const previewDataUrl = await QRCode.toDataURL(url, {
-            errorCorrectionLevel: "H",
-            width: 300,
-            margin: 1,
-            color: { dark: "#0C0C0B", light: "#FFFFFF" },
-          });
-
+        if (canvasRef.current && previewData.dataUrl) {
           const img = new Image();
           await new Promise<void>((resolve) => {
             img.onload = () => resolve();
-            img.src = previewDataUrl;
+            img.src = previewData.dataUrl;
           });
 
           const ctx = canvasRef.current.getContext("2d")!;
@@ -98,44 +100,25 @@ export default function AdminQRPage() {
         }
 
         // Generate small QR code
-        const smallDataUrl = await QRCode.toDataURL(url, {
-          errorCorrectionLevel: "H",
-          width: 320,
-          margin: 2,
-          color: { dark: "#000000", light: "#FFFFFF" },
+        const smallRes = await fetch("/api/admin/qr-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url, size: 320, type: "small" }),
         });
-        const smallImg = new Image();
-        await new Promise<void>((resolve) => {
-          smallImg.onload = () => resolve();
-          smallImg.src = smallDataUrl;
-        });
-        const smallCanvas = document.createElement("canvas");
-        smallCanvas.width = 320;
-        smallCanvas.height = 320;
-        smallCanvas.getContext("2d")!.drawImage(smallImg, 0, 0);
-        const smallBlob = await canvasToBlob(smallCanvas);
+        const smallData = await smallRes.json();
+        const smallBlob = await dataUrlToBlob(smallData.dataUrl);
 
         // Generate large QR code
-        const largeDataUrl = await QRCode.toDataURL(url, {
-          errorCorrectionLevel: "H",
-          width: 480,
-          margin: 2,
-          color: { dark: "#000000", light: "#FFFFFF" },
+        const largeRes = await fetch("/api/admin/qr-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url, size: 480, type: "large" }),
         });
-        const largeImg = new Image();
-        await new Promise<void>((resolve) => {
-          largeImg.onload = () => resolve();
-          largeImg.src = largeDataUrl;
-        });
-        const largeCanvas = document.createElement("canvas");
-        largeCanvas.width = 480;
-        largeCanvas.height = 480;
-        largeCanvas.getContext("2d")!.drawImage(largeImg, 0, 0);
-        const largeBlob = await canvasToBlob(largeCanvas);
+        const largeData = await largeRes.json();
+        const largeBlob = await dataUrlToBlob(largeData.dataUrl);
 
         // Generate print version with branding
-        const largeUrl = URL.createObjectURL(largeBlob);
-        const printCanvas = await buildPrintCanvas(largeUrl);
+        const printCanvas = await buildPrintCanvas(largeData.dataUrl);
         const printBlob = await canvasToBlob(printCanvas);
 
         // Create object URLs for downloads
@@ -146,9 +129,6 @@ export default function AdminQRPage() {
         blobUrls.current = [su, lu, pu];
         setBlobs({ small: smallBlob, large: largeBlob, print: printBlob });
         setUrls({ small: su, large: lu, print: pu });
-
-        // Clean up temporary blob URL
-        URL.revokeObjectURL(largeUrl);
       } catch (err) {
         console.error("QR code generation failed:", err);
       }
