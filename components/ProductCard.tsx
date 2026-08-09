@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Heart, ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
@@ -19,13 +18,18 @@ export default function ProductCard({ product }: { product: Product }) {
       className="relative bg-white rounded-md overflow-hidden shadow-sm"
     >
       <Link href={`/product/${product.slug}`}>
-        <div className="relative aspect-square">
-          <Image
-            src={product.image}
-            alt={product.name[locale]}
-            fill
-            className="object-cover"
-          />
+        <div className="aspect-square bg-gray-100 overflow-hidden">
+          {product.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={product.image}
+              alt={product.name[locale]}
+              className="w-full h-full object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-300 text-4xl">🛋️</div>
+          )}
         </div>
       </Link>
 
