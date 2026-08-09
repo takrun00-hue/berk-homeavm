@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/generate-static-data.js; next build",
+    "prebuild": "node scripts/generate-static-data.js || true",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },

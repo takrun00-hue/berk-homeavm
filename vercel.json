@@ -1,6 +1,3 @@
 {
-  "framework": "nextjs",
-  "buildCommand": "node scripts/generate-static-data.js; next build",
-  "installCommand": "npm install",
-  "outputDirectory": ".next"
+  "framework": "nextjs"
 }
