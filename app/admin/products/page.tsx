@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { ChevronUp, ChevronDown, Plus, Trash2 } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 import { useLanguage } from "@/context/LanguageContext";
@@ -378,9 +377,8 @@ export default function AdminProductsPage() {
                   />
                   {variantUploading === i && <span className="text-xs text-gray-400">Yükleniyor...</span>}
                   {v.image && (
-                    <div className="relative w-10 h-10 rounded overflow-hidden border shrink-0">
-                      <Image src={v.image} alt={v.name} fill className="object-cover" />
-                    </div>
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={v.image} alt={v.name} className="w-10 h-10 rounded object-cover border shrink-0" />
                   )}
                 </div>
               </div>
@@ -414,9 +412,8 @@ export default function AdminProductsPage() {
               key={p.id}
               className="flex items-center gap-3 border rounded-md p-3 text-sm bg-white"
             >
-              <div className="relative w-14 h-14 rounded overflow-hidden shrink-0">
-                <Image src={p.image} alt={p.name_tr} fill className="object-cover" />
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p.image} alt={p.name_tr} className="w-14 h-14 rounded object-cover shrink-0 border" />
               <div className="flex-1">
                 <p className="font-bold">{locale === "tr" ? p.name_tr : p.name_en}</p>
                 <p className="text-gray-400 text-xs">{p.cat_tr || "-"}</p>
