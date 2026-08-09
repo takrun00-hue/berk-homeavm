@@ -114,13 +114,8 @@ export default function AdminQRPage() {
 
     return () => {
       isMounted = false;
-      if (urls) {
-        URL.revokeObjectURL(urls.small);
-        URL.revokeObjectURL(urls.large);
-        URL.revokeObjectURL(urls.print);
-      }
     };
-  }, [urls]);
+  }, []);
 
   const handleShare = async () => {
     if (!urls) return;
