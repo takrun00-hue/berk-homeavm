@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Download, Printer, Share2, Copy, Check } from "lucide-react";
-import QRCode from "qrcode";
 import AdminLayout from "@/components/AdminLayout";
 
 const getSiteUrl = () => {
@@ -64,33 +63,42 @@ export default function AdminQRPage() {
 
     const generateQRCodes = async () => {
       try {
-        console.log("Starting QR code generation for URL:", url);
-        console.log("QRCode object:", QRCode);
-        console.log("QRCode.toDataURL:", QRCode.toDataURL);
+        console.log("Starting QR generation");
+        // Load qrcode library dynamically to avoid import issues
+        console.log("About to import qrcode library");
+        let QRCode: any;
+        try {
+          QRCode = (await import("qrcode")).default;
+          console.log("QRCode imported successfully:", !!QRCode);
+        } catch (importErr) {
+          console.error("Failed to import qrcode:", importErr);
+          throw importErr;
+        }
 
         // Generate preview QR code
         if (canvasRef.current) {
-          console.log("Rendering preview canvas...");
-          console.log("Calling QRCode.toDataURL...");
-          const previewUrl = await QRCode.toDataURL(url, {
+          console.log("Generating preview QR...");
+          const previewDataUrl = await QRCode.toDataURL(url, {
             errorCorrectionLevel: "H",
             width: 300,
             margin: 1,
             color: { dark: "#0C0C0B", light: "#FFFFFF" },
           });
-          const previewImg = new Image();
+
+          const img = new Image();
           await new Promise<void>((resolve) => {
-            previewImg.onload = () => resolve();
-            previewImg.src = previewUrl;
+            img.onload = () => resolve();
+            img.src = previewDataUrl;
           });
+
           const ctx = canvasRef.current.getContext("2d")!;
-          ctx.canvas.width = 300;
-          ctx.canvas.height = 300;
-          ctx.drawImage(previewImg, 0, 0);
+          canvasRef.current.width = 300;
+          canvasRef.current.height = 300;
+          ctx.drawImage(img, 0, 0);
         }
 
         // Generate small QR code
-        const smallUrl = await QRCode.toDataURL(url, {
+        const smallDataUrl = await QRCode.toDataURL(url, {
           errorCorrectionLevel: "H",
           width: 320,
           margin: 2,
@@ -99,7 +107,7 @@ export default function AdminQRPage() {
         const smallImg = new Image();
         await new Promise<void>((resolve) => {
           smallImg.onload = () => resolve();
-          smallImg.src = smallUrl;
+          smallImg.src = smallDataUrl;
         });
         const smallCanvas = document.createElement("canvas");
         smallCanvas.width = 320;
@@ -141,7 +149,6 @@ export default function AdminQRPage() {
 
         // Clean up temporary blob URL
         URL.revokeObjectURL(largeUrl);
-        console.log("QR code generation completed successfully");
       } catch (err) {
         console.error("QR code generation failed:", err);
       }
