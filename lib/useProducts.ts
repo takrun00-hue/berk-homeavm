@@ -8,27 +8,26 @@ export function useProducts() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Try static JSON first (works even if API routes are broken on Vercel),
-    // then fall back to the API route.
     const fetchProducts = async () => {
+      // Try live API first so new products appear immediately
       try {
-        const res = await fetch(`/data/products.json?t=${Date.now()}`, {
+        const res = await fetch(`/api/products?t=${Date.now()}`, {
           cache: "no-store",
+          headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
         });
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data.products) && data.products.length > 0) {
+          if (Array.isArray(data.products)) {
             setProducts(data.products);
             return;
           }
         }
       } catch {}
 
-      // Fallback to API route
+      // Fallback to static JSON (works when API routes are unavailable)
       try {
-        const res = await fetch(`/api/products?t=${Date.now()}`, {
+        const res = await fetch(`/data/products.json?t=${Date.now()}`, {
           cache: "no-store",
-          headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
         });
         if (res.ok) {
           const data = await res.json();
