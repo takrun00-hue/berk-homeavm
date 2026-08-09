@@ -19,14 +19,23 @@ export default function AdminSettingsPage() {
     fetch("/api/admin/settings")
       .then((r) => r.json())
       .then((d) => {
+        if (d.error) {
+          setSaveError(d.error);
+          setLoading(false);
+          return;
+        }
         setForm({
-          contact_phone: d.settings.contact_phone || "",
-          contact_email: d.settings.contact_email || "",
-          contact_address: d.settings.contact_address || "",
+          contact_phone: d.settings?.contact_phone || "",
+          contact_email: d.settings?.contact_email || "",
+          contact_address: d.settings?.contact_address || "",
         });
         try {
-          setExtras(JSON.parse(d.settings.contact_extra_fields || "[]"));
+          setExtras(JSON.parse(d.settings?.contact_extra_fields || "[]"));
         } catch { setExtras([]); }
+        setLoading(false);
+      })
+      .catch((err) => {
+        setSaveError("Ayarlar yüklenemedi: " + (err instanceof Error ? err.message : "Bilinmeyen hata"));
         setLoading(false);
       });
   }, []);
