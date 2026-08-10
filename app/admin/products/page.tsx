@@ -5,7 +5,7 @@ import { ChevronUp, ChevronDown, Plus, Trash2 } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 import { useLanguage } from "@/context/LanguageContext";
 
-const STANDARD_SIZE = 1000;
+const STANDARD_SIZE = 600;
 
 interface Cat {
   id: number;
@@ -58,8 +58,8 @@ export default function AdminProductsPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [uploadMsg, setUploadMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [variantUploading, setVariantUploading] = useState<number | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { locale, t } = useLanguage();
 
   const load = () => {
@@ -75,28 +75,26 @@ export default function AdminProductsPage() {
     load();
   }, []);
 
-  const resizeImage = (file: File): Promise<Blob> => {
+  const fileToDataUrl = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const img = new window.Image();
       const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Dosya okunamadı"));
       reader.onload = (e) => {
+        const img = new Image();
+        img.onerror = () => reject(new Error("Görsel yüklenemedi"));
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = STANDARD_SIZE;
+          canvas.height = STANDARD_SIZE;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return reject(new Error("Canvas hatası"));
+          const side = Math.min(img.width, img.height);
+          const sx = (img.width - side) / 2;
+          const sy = (img.height - side) / 2;
+          ctx.drawImage(img, sx, sy, side, side, 0, 0, STANDARD_SIZE, STANDARD_SIZE);
+          resolve(canvas.toDataURL("image/jpeg", 0.75));
+        };
         img.src = e.target?.result as string;
-      };
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = STANDARD_SIZE;
-        canvas.height = STANDARD_SIZE;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return reject("Canvas error");
-        const side = Math.min(img.width, img.height);
-        const sx = (img.width - side) / 2;
-        const sy = (img.height - side) / 2;
-        ctx.drawImage(img, sx, sy, side, side, 0, 0, STANDARD_SIZE, STANDARD_SIZE);
-        canvas.toBlob(
-          (blob) => (blob ? resolve(blob) : reject("Blob error")),
-          "image/jpeg",
-          0.9
-        );
       };
       reader.readAsDataURL(file);
     });
@@ -105,23 +103,14 @@ export default function AdminProductsPage() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (imagePreview) URL.revokeObjectURL(imagePreview);
-    setImagePreview(URL.createObjectURL(file));
     setUploading(true);
+    setUploadMsg(null);
     try {
-      const resizedBlob = await resizeImage(file);
-      const formData = new FormData();
-      formData.append("file", resizedBlob, "product.jpg");
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.url) {
-        setForm((f) => ({ ...f, image: data.url }));
-      }
+      const dataUrl = await fileToDataUrl(file);
+      setForm((f) => ({ ...f, image: dataUrl }));
+      setUploadMsg({ ok: true, text: "✓ Görsel hazır" });
     } catch (err) {
-      setError("Upload failed.");
+      setUploadMsg({ ok: false, text: "✗ Hata: " + (err instanceof Error ? err.message : String(err)) });
     } finally {
       setUploading(false);
     }
@@ -137,6 +126,7 @@ export default function AdminProductsPage() {
     setForm(emptyForm);
     setVariants([]);
     setEditingId(null);
+    setUploadMsg(null);
   };
 
   const addVariant = () => setVariants((v) => [...v, { ...emptyVariant }]);
@@ -152,14 +142,13 @@ export default function AdminProductsPage() {
     if (!file) return;
     setVariantUploading(i);
     try {
-      const resizedBlob = await resizeImage(file);
-      const formData = new FormData();
-      formData.append("file", resizedBlob, "variant.jpg");
-      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (data.url) updateVariant(i, "image", data.url);
-    } catch {}
-    finally { setVariantUploading(null); }
+      const dataUrl = await fileToDataUrl(file);
+      updateVariant(i, "image", dataUrl);
+    } catch (err) {
+      setError("Varyant görseli hatası: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setVariantUploading(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -330,13 +319,18 @@ export default function AdminProductsPage() {
               onChange={handleFileChange}
               className="w-full border rounded-md px-3 py-2 text-sm"
             />
-            {uploading && <p className="text-xs text-gray-500">{t("adminUploading")}</p>}
-            {(imagePreview || form.image) && (
+            {uploading && <p className="text-xs text-blue-600">⏳ İşleniyor...</p>}
+            {uploadMsg && (
+              <p className={`text-xs font-bold ${uploadMsg.ok ? "text-green-600" : "text-red-600"}`}>
+                {uploadMsg.text}
+              </p>
+            )}
+            {form.image && !uploading && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={imagePreview || form.image}
+                src={form.image}
                 alt="preview"
-                className="w-24 h-24 rounded-md object-cover border"
+                className="w-32 h-32 rounded-md object-cover border"
               />
             )}
           </div>
