@@ -75,6 +75,35 @@ export default function AdminProductsPage() {
     load();
   }, []);
 
+  const resizeToBlob = (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Dosya okunamadı"));
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onerror = () => reject(new Error("Görsel yüklenemedi"));
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = STANDARD_SIZE;
+          canvas.height = STANDARD_SIZE;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return reject(new Error("Canvas hatası"));
+          const side = Math.min(img.width, img.height);
+          const sx = (img.width - side) / 2;
+          const sy = (img.height - side) / 2;
+          ctx.drawImage(img, sx, sy, side, side, 0, 0, STANDARD_SIZE, STANDARD_SIZE);
+          canvas.toBlob(
+            (blob) => (blob ? resolve(blob) : reject(new Error("Blob hatası"))),
+            "image/jpeg",
+            0.82
+          );
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const fileToDataUrl = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -100,17 +129,38 @@ export default function AdminProductsPage() {
     });
   };
 
+  const uploadFile = async (file: File): Promise<{ url: string; storage: string }> => {
+    const blob = await resizeToBlob(file);
+    const formData = new FormData();
+    formData.append("file", blob, "product.jpg");
+    const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+    if (!res.ok) throw new Error(`Sunucu hatası: ${res.status}`);
+    const data = await res.json();
+    if (!data.url) throw new Error("URL döndürülmedi");
+    return data;
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
     setUploadMsg(null);
     try {
-      const dataUrl = await fileToDataUrl(file);
-      setForm((f) => ({ ...f, image: dataUrl }));
-      setUploadMsg({ ok: true, text: "✓ Görsel hazır" });
-    } catch (err) {
-      setUploadMsg({ ok: false, text: "✗ Hata: " + (err instanceof Error ? err.message : String(err)) });
+      const data = await uploadFile(file);
+      setForm((f) => ({ ...f, image: data.url }));
+      setUploadMsg({
+        ok: true,
+        text: data.storage === "r2" ? "✓ R2'ye kaydedildi" : "✓ Görsel kaydedildi",
+      });
+    } catch {
+      // Fallback: client-side base64 if server upload fails
+      try {
+        const dataUrl = await fileToDataUrl(file);
+        setForm((f) => ({ ...f, image: dataUrl }));
+        setUploadMsg({ ok: true, text: "✓ Görsel hazır (yerel)" });
+      } catch (err2) {
+        setUploadMsg({ ok: false, text: "✗ Hata: " + (err2 instanceof Error ? err2.message : String(err2)) });
+      }
     } finally {
       setUploading(false);
     }
@@ -142,10 +192,15 @@ export default function AdminProductsPage() {
     if (!file) return;
     setVariantUploading(i);
     try {
-      const dataUrl = await fileToDataUrl(file);
-      updateVariant(i, "image", dataUrl);
-    } catch (err) {
-      setError("Varyant görseli hatası: " + (err instanceof Error ? err.message : String(err)));
+      const data = await uploadFile(file);
+      updateVariant(i, "image", data.url);
+    } catch {
+      try {
+        const dataUrl = await fileToDataUrl(file);
+        updateVariant(i, "image", dataUrl);
+      } catch (err2) {
+        setError("Varyant görseli hatası: " + (err2 instanceof Error ? err2.message : String(err2)));
+      }
     } finally {
       setVariantUploading(null);
     }
