@@ -1,34 +1,33 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 
+const FALLBACK = "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1600";
+
 export default function Hero() {
   const { t } = useLanguage();
-  const [heroUrl, setHeroUrl] = useState("https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1600");
+  const [heroUrl, setHeroUrl] = useState(FALLBACK);
 
   useEffect(() => {
     fetch("/api/settings")
       .then(r => r.json())
       .then(d => {
-        const url = d.settings?.hero_background_url || "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1600";
-        setHeroUrl(url);
+        const url = d.settings?.hero_background_url;
+        if (url) setHeroUrl(url);
       })
-      .catch(() => {
-        setHeroUrl("https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1600");
-      });
+      .catch(() => {});
   }, []);
 
   return (
-    <section className="relative h-[70vh] w-full flex items-center justify-center text-center px-4">
-      <Image
+    <section className="relative h-[70vh] w-full flex items-center justify-center text-center px-4 overflow-hidden">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src={heroUrl}
-        alt="hero background"
-        fill
-        priority
-        className="object-cover"
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover"
+        onError={() => setHeroUrl(FALLBACK)}
       />
       <div className="absolute inset-0 bg-black/50" />
       <div className="relative z-10 text-white space-y-4 max-w-lg">
