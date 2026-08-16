@@ -4,6 +4,7 @@ import { formatPrice } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
 import { useProducts } from "@/lib/useProducts";
+import { productUnitPrice } from "@/lib/pricing";
 import { useState } from "react";
 
 export default function ProductDetailPage({
@@ -54,10 +55,7 @@ export default function ProductDetailPage({
     setFailedImages((prev) => ({ ...prev, [displayImage]: failed }));
 
   const discountPct = product.discountPercent ?? 0;
-  const discountedPrice =
-    discountPct > 0
-      ? Math.round(product.priceMin * (1 - discountPct / 100))
-      : null;
+  const discountedPrice = discountPct > 0 ? productUnitPrice(product) : null;
 
   return (
     <section className="py-10 px-4 max-w-3xl mx-auto space-y-6">

@@ -6,6 +6,7 @@ import { useCart } from "@/context/CartContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatPrice } from "@/lib/utils";
 import { DEFAULT_TAX_RATES, summariseTax } from "@/lib/tax";
+import { productUnitPrice } from "@/lib/pricing";
 import { CreditCard, Wallet, Building2 } from "lucide-react";
 
 interface CustomMethod { name: string; details: string; }
@@ -98,7 +99,7 @@ export default function CheckoutPage() {
   // rather than divided by one blended rate.
   const taxSummary = summariseTax(
     items.map((i) => ({
-      gross: i.product.priceMin * i.quantity,
+      gross: productUnitPrice(i.product) * i.quantity,
       taxRate: i.product.taxRate ?? DEFAULT_TAX_RATES.standard,
     }))
   );
@@ -260,7 +261,7 @@ export default function CheckoutPage() {
             {items.map((i) => (
               <div key={i.product.id} className="flex justify-between px-4 py-2 border-t">
                 <span>{i.product.name[locale]} × {i.quantity}</span>
-                <span>{formatPrice(i.product.priceMin * i.quantity, locale)} {locale === "tr" ? "₺" : "TRY"}</span>
+                <span>{formatPrice(productUnitPrice(i.product) * i.quantity, locale)} {locale === "tr" ? "₺" : "TRY"}</span>
               </div>
             ))}
             <div className="flex justify-between px-4 py-2 border-t text-gray-500 text-xs">

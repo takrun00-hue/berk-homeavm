@@ -5,6 +5,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
 import { formatPrice } from "@/lib/utils";
 import { DEFAULT_TAX_RATES, summariseTax } from "@/lib/tax";
+import { productUnitPrice } from "@/lib/pricing";
 import { X, Plus, Minus } from "lucide-react";
 
 export default function CartPage() {
@@ -16,7 +17,7 @@ export default function CartPage() {
   // customer knows the tax before reaching checkout.
   const taxSummary = summariseTax(
     items.map((i) => ({
-      gross: i.product.priceMin * i.quantity,
+      gross: productUnitPrice(i.product) * i.quantity,
       taxRate: i.product.taxRate ?? DEFAULT_TAX_RATES.standard,
     }))
   );
@@ -55,7 +56,14 @@ export default function CartPage() {
             <div className="flex-1">
               <h3 className="font-bold text-sm">{product.name[locale]}</h3>
               <p className="text-gold font-bold text-sm mt-1">
-                {formatPrice(product.priceMin, locale)}{" "}
+                {/* Show the list price struck through when a discount applies,
+                    so the cart matches what the product page advertised. */}
+                {(product.discountPercent ?? 0) > 0 && (
+                  <span className="text-gray-400 line-through font-normal mr-1.5">
+                    {formatPrice(product.priceMin, locale)}
+                  </span>
+                )}
+                {formatPrice(productUnitPrice(product), locale)}{" "}
                 {locale === "tr" ? "₺" : "TRY"}
               </p>
 

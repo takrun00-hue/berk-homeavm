@@ -8,6 +8,7 @@ import { Product } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
+import { productUnitPrice } from "@/lib/pricing";
 
 export default function ProductCard({ product }: { product: Product }) {
   const { locale } = useLanguage();
@@ -92,7 +93,7 @@ export default function ProductCard({ product }: { product: Product }) {
               {formatPrice(product.priceMin, locale)} {locale === "tr" ? "₺" : "TRY"}
             </p>
             <p className="text-red-500 font-extrabold text-sm">
-              {formatPrice(Math.round(product.priceMin * (1 - (product.discountPercent ?? 0) / 100)), locale)} {locale === "tr" ? "₺" : "TRY"}
+              {formatPrice(productUnitPrice(product), locale)} {locale === "tr" ? "₺" : "TRY"}
             </p>
           </div>
         ) : (
