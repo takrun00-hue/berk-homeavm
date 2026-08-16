@@ -4,6 +4,12 @@ import { useEffect, useState } from "react";
 import { ChevronUp, ChevronDown, Plus, Trash2, AlertCircle } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 import { useLanguage } from "@/context/LanguageContext";
+import {
+  DEFAULT_TAX_RATES,
+  TAX_TIER_LABELS,
+  effectiveTaxRate,
+  splitInclusiveTax,
+} from "@/lib/tax";
 
 const STANDARD_SIZE = 600;
 
@@ -34,6 +40,8 @@ interface Prod {
   sort_order: number;
   discount_percent: number;
   variants: ColorVariant[];
+  /** Empty means "inherit the category's tier". */
+  tax_tier: string | null;
 }
 
 const emptyForm = {
@@ -46,6 +54,7 @@ const emptyForm = {
   description_tr: "",
   description_en: "",
   discount_percent: "0",
+  tax_tier: "",
 };
 
 const emptyVariant: ColorVariant = { name: "", hex: "#000000", image: "" };
@@ -60,7 +69,17 @@ export default function AdminProductsPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [variantUploading, setVariantUploading] = useState<number | null>(null);
+  const [taxRates, setTaxRates] = useState(DEFAULT_TAX_RATES);
+  const [categoryTiers, setCategoryTiers] = useState<Record<string, string>>({});
   const { locale, t } = useLanguage();
+
+  // Rate a product inherits when its own tier is left on "Kategoriden".
+  const categoryTaxRate = effectiveTaxRate(null, categoryTiers[form.category_id], taxRates);
+  const effectiveFormTaxRate = effectiveTaxRate(
+    form.tax_tier,
+    categoryTiers[form.category_id],
+    taxRates
+  );
 
   const load = () => {
     fetch("/api/admin/products")
@@ -73,6 +92,19 @@ export default function AdminProductsPage() {
     fetch("/api/admin/categories")
       .then((r) => r.json())
       .then((d) => setCategories(d.categories || []))
+      .catch(() => {});
+    // Tier percentages and each category's tier, so the form can show the real
+    // rate a product will be taxed at.
+    fetch("/api/admin/tax")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.taxTiers) setTaxRates(d.taxTiers);
+        const tiers: Record<string, string> = {};
+        (d.categories || []).forEach((c: { id: string; taxTier: string }) => {
+          tiers[c.id] = c.taxTier;
+        });
+        setCategoryTiers(tiers);
+      })
       .catch(() => {});
   };
 
@@ -227,6 +259,7 @@ export default function AdminProductsPage() {
       description_en: form.description_en,
       discount_percent: Number(form.discount_percent) || 0,
       variants: variants.filter((v) => v.name && v.image),
+      tax_tier: form.tax_tier || null,
     };
 
     const url = editingId
@@ -261,6 +294,7 @@ export default function AdminProductsPage() {
       description_tr: p.description_tr || "",
       description_en: p.description_en || "",
       discount_percent: String(p.discount_percent || 0),
+      tax_tier: p.tax_tier || "",
     });
     setVariants(Array.isArray(p.variants) ? p.variants : []);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -328,15 +362,47 @@ export default function AdminProductsPage() {
             ))}
           </select>
 
-          <input
-            name="price"
-            type="number"
-            placeholder="Fiyat (₺)"
-            value={form.price}
-            onChange={handleChange}
-            required
-            className="w-full border rounded-md px-3 py-2 text-sm"
-          />
+          <div className="flex gap-2">
+            <input
+              name="price"
+              type="number"
+              placeholder="Fiyat (₺)"
+              value={form.price}
+              onChange={handleChange}
+              required
+              className="flex-1 border rounded-md px-3 py-2 text-sm"
+            />
+            <select
+              name="tax_tier"
+              value={form.tax_tier}
+              onChange={handleChange}
+              title="KDV oranı"
+              className="w-40 border rounded-md px-2 py-2 text-sm bg-white"
+            >
+              <option value="">
+                Kategoriden ({categoryTaxRate}%)
+              </option>
+              {(["standard", "reduced", "special"] as const).map((tier) => (
+                <option key={tier} value={tier}>
+                  {TAX_TIER_LABELS[tier].tr} %{taxRates[tier]}
+                </option>
+              ))}
+            </select>
+          </div>
+          {/* Prices are entered tax-inclusive, so show the split the customer
+              will be shown at checkout rather than leaving it implicit. */}
+          {Number(form.price) > 0 && (
+            <p className="text-xs text-gray-500 -mt-1">
+              {Number(form.price).toLocaleString("tr-TR")} ₺ KDV dahil ={" "}
+              <span className="font-semibold">
+                {Math.round(splitInclusiveTax(Number(form.price), effectiveFormTaxRate).net).toLocaleString("tr-TR")} ₺
+              </span>{" "}
+              + %{effectiveFormTaxRate} KDV{" "}
+              <span className="font-semibold">
+                {Math.round(splitInclusiveTax(Number(form.price), effectiveFormTaxRate).tax).toLocaleString("tr-TR")} ₺
+              </span>
+            </p>
+          )}
 
           <textarea
             name="description_tr"

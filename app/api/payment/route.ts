@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 import crypto from "crypto";
 import Stripe from "stripe";
+import {
+  DEFAULT_TAX_RATES,
+  effectiveTaxRate,
+  summariseTax,
+  taxRatesFromSettings,
+} from "@/lib/tax";
 
 async function getSettings() {
   const { rows } = await pool.sql`SELECT key, value FROM site_settings`;
@@ -228,20 +234,45 @@ async function notifyCargo(orderId: number, form: Record<string, string>, items:
   } catch {}
 }
 
-// ── Get effective tax rate from tier system ────────────────────────────────
-async function getEffectiveTaxRate(productId: string | number, settings: Record<string, string>): Promise<number> {
-  try {
-    const { rows } = await pool.sql`
-      SELECT COALESCE(p.tax_tier, c.tax_tier) as tier
-      FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.id = ${Number(productId)}
-    `;
-    const tier = rows[0]?.tier || "standard";
-    const tierKey = `tax_tier_${tier}`;
-    return Number(settings[tierKey] || settings.tax_tier_standard) || 20;
-  } catch {}
-  return Number(settings.tax_tier_standard) || 20;
+// ── Effective tax rate per product, from the tier system ───────────────────
+// Resolved server-side rather than trusting whatever the client posted, and in
+// a single query so a large basket does not fan out into one round trip each.
+async function getTaxRatesByProduct(
+  items: CartItem[],
+  settings: Record<string, string>
+): Promise<Map<string, number>> {
+  const rates = taxRatesFromSettings(settings);
+  const byProduct = new Map<string, number>();
+  const ids = items
+    .map((i) => Number(i.product.id))
+    .filter((n) => Number.isFinite(n));
+
+  if (ids.length) {
+    try {
+      const { rows } = await pool.sql`
+        SELECT p.id, p.tax_tier AS product_tier, c.tax_tier AS category_tier
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.id = ANY(${ids})
+      `;
+      for (const r of rows) {
+        byProduct.set(
+          String(r.id),
+          effectiveTaxRate(r.product_tier, r.category_tier, rates)
+        );
+      }
+    } catch (e) {
+      console.error("Tax rate lookup failed, falling back to standard:", e);
+    }
+  }
+
+  // Anything unresolved (deleted product, non-numeric id) falls back to standard.
+  for (const item of items) {
+    if (!byProduct.has(String(item.product.id))) {
+      byProduct.set(String(item.product.id), rates.standard);
+    }
+  }
+  return byProduct;
 }
 
 async function saveOrder(
@@ -252,11 +283,21 @@ async function saveOrder(
   settings: Record<string, string>
 ): Promise<{ orderId: number; taxRate: number } | null> {
   try {
-    // Use tax rate from first item's product (or default)
-    const taxRate = items.length > 0 ? await getEffectiveTaxRate(items[0].product.id, settings) : (Number(settings.default_tax_rate) || 20);
-    const taxMultiplier = 1 + taxRate / 100;
-    const subtotal = Math.round(total / taxMultiplier);
-    const taxAmount = total - subtotal;
+    // Tax every line at its own product's rate. Using one rate for the whole
+    // basket overcharges or undercharges as soon as tiers are mixed.
+    const ratesByProduct = await getTaxRatesByProduct(items, settings);
+    const summary = summariseTax(
+      items.map((i) => ({
+        gross: i.product.priceMin * i.quantity,
+        taxRate: ratesByProduct.get(String(i.product.id)) ?? DEFAULT_TAX_RATES.standard,
+      }))
+    );
+
+    const taxAmount = Math.round(summary.tax);
+    const subtotal = total - taxAmount;
+    // orders.tax_rate holds a single figure; for a mixed basket record the
+    // effective blended rate so it still reconciles against tax_amount.
+    const taxRate = summary.net > 0 ? Math.round((summary.tax / summary.net) * 100) : 0;
     const address = [
       form.street, form.houseNo, form.apartmentNo,
       form.neighborhood, form.district, form.province,

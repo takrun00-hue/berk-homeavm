@@ -22,6 +22,8 @@ export interface Product {
   description: LocalizedText;
   discountPercent?: number;
   variants?: ColorVariant[];
+  /** Effective VAT percentage, resolved product → category → standard tier. */
+  taxRate?: number;
 }
 
 export interface Category {

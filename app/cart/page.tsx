@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
 import { formatPrice } from "@/lib/utils";
+import { DEFAULT_TAX_RATES, summariseTax } from "@/lib/tax";
 import { X, Plus, Minus } from "lucide-react";
 
 export default function CartPage() {
@@ -11,10 +12,15 @@ export default function CartPage() {
   const { items, removeFromCart, increaseQuantity, decreaseQuantity } =
     useCart();
 
-  const total = items.reduce(
-    (sum, i) => sum + i.product.priceMin * i.quantity,
-    0
+  // Prices include VAT at each product's own rate; show the split here so the
+  // customer knows the tax before reaching checkout.
+  const taxSummary = summariseTax(
+    items.map((i) => ({
+      gross: i.product.priceMin * i.quantity,
+      taxRate: i.product.taxRate ?? DEFAULT_TAX_RATES.standard,
+    }))
   );
+  const total = taxSummary.gross;
 
   if (items.length === 0) {
     return (
@@ -78,11 +84,27 @@ export default function CartPage() {
         ))}
       </div>
 
-      <div className="border-t pt-4 flex justify-between items-center font-extrabold">
-        <span>{t("total")}</span>
-        <span className="text-gold">
-          {formatPrice(total, locale)} {locale === "tr" ? "₺" : "TRY"}
-        </span>
+      <div className="border-t pt-4 space-y-1.5">
+        <div className="flex justify-between text-xs text-gray-500">
+          <span>KDV Hariç</span>
+          <span>
+            {formatPrice(Math.round(taxSummary.net), locale)} {locale === "tr" ? "₺" : "TRY"}
+          </span>
+        </div>
+        {taxSummary.byRate.map((b) => (
+          <div key={b.rate} className="flex justify-between text-xs text-gray-500">
+            <span>KDV (%{b.rate})</span>
+            <span>
+              {formatPrice(Math.round(b.tax), locale)} {locale === "tr" ? "₺" : "TRY"}
+            </span>
+          </div>
+        ))}
+        <div className="flex justify-between items-center font-extrabold pt-1.5 border-t">
+          <span>{t("total")} (KDV Dahil)</span>
+          <span className="text-gold">
+            {formatPrice(total, locale)} {locale === "tr" ? "₺" : "TRY"}
+          </span>
+        </div>
       </div>
 
       <Link

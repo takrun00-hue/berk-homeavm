@@ -1,5 +1,6 @@
 import { pool } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { effectiveTaxRate, taxRatesFromSettings } from "@/lib/tax";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -72,17 +73,28 @@ function needsHealing(img: string, resolved: string): boolean {
 
 export async function GET() {
   try {
-    const { rows } = await pool.sql`
-      SELECT p.id, p.slug, p.name_tr, p.name_en, p.price_min, p.price_max,
-             p.image, p.description_tr, p.description_en,
-             COALESCE(p.discount_percent, 0) as discount_percent,
-             COALESCE(p.variants, '[]') as variants,
-             p.category_id,
-             c.name_tr as cat_tr, c.name_en as cat_en, c.slug as cat_slug
-      FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
-      ORDER BY p.sort_order ASC
-    `;
+    const [{ rows }, { rows: settingRows }] = await Promise.all([
+      pool.sql`
+        SELECT p.id, p.slug, p.name_tr, p.name_en, p.price_min, p.price_max,
+               p.image, p.description_tr, p.description_en,
+               COALESCE(p.discount_percent, 0) as discount_percent,
+               COALESCE(p.variants, '[]') as variants,
+               p.category_id, p.tax_tier as product_tax_tier,
+               c.name_tr as cat_tr, c.name_en as cat_en, c.slug as cat_slug,
+               c.tax_tier as cat_tax_tier
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        ORDER BY p.sort_order ASC
+      `,
+      pool.sql`
+        SELECT key, value FROM site_settings
+        WHERE key IN ('tax_tier_standard', 'tax_tier_reduced', 'tax_tier_special')
+      `,
+    ]);
+
+    const settings: Record<string, string> = {};
+    settingRows.forEach((r) => (settings[r.key] = r.value));
+    const taxRates = taxRatesFromSettings(settings);
 
     const toHeal: { id: string; image: string }[] = [];
 
@@ -111,6 +123,7 @@ export async function GET() {
         description: { tr: r.description_tr, en: r.description_en },
         discountPercent: Number(r.discount_percent) || 0,
         variants,
+        taxRate: effectiveTaxRate(r.product_tax_tier, r.cat_tax_tier, taxRates),
       };
     });
 
