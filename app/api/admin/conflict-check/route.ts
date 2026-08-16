@@ -8,17 +8,25 @@ export async function POST(req: NextRequest) {
   if (!checkAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const { entityType, entityId, proposedValue } = await req.json();
+    const { entityType, entityId, proposedValue, changedBy } = await req.json();
 
-    if (!entityType || !entityId || proposedValue === undefined) {
+    if (!entityType || proposedValue === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Get latest change for this entity
+    // Settings-type entities (tax_tier, membership_setting) are logged with a
+    // NULL entity_id, so entityId is legitimately absent for them. Match NULL to
+    // NULL with IS NOT DISTINCT FROM instead of coercing null to 0.
+    const idNum =
+      entityId === null || entityId === undefined || entityId === ""
+        ? null
+        : Number(entityId);
+
     const { rows } = await pool.sql`
       SELECT id, action, old_value, new_value, changed_by, changed_at
       FROM change_log
-      WHERE entity_type = ${entityType} AND entity_id = ${Number(entityId)}
+      WHERE entity_type = ${entityType}
+        AND entity_id IS NOT DISTINCT FROM ${idNum}
       ORDER BY changed_at DESC
       LIMIT 1
     `;
@@ -31,8 +39,13 @@ export async function POST(req: NextRequest) {
     const timeSinceChange = Date.now() - new Date(lastChange.changed_at).getTime();
     const thirtyMinutesMs = 30 * 60 * 1000;
 
-    // Conflict if changed within last 30 minutes by different bot
-    const hasConflict = timeSinceChange < thirtyMinutesMs && lastChange.changed_by !== "system";
+    // A conflict is a recent change made by *someone else*. A bot re-checking
+    // its own change must not be blocked by it, so the caller may identify
+    // itself via changedBy; "system" changes never count as conflicts.
+    const byAnotherActor =
+      lastChange.changed_by !== "system" &&
+      (!changedBy || lastChange.changed_by !== changedBy);
+    const hasConflict = timeSinceChange < thirtyMinutesMs && byAnotherActor;
 
     return NextResponse.json({
       hasConflict,
