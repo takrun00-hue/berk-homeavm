@@ -207,6 +207,56 @@ interface CartItem {
   quantity: number;
 }
 
+// ── Save order to DB ────────────────────────────────────────────────────────
+const TAX_RATE = 20; // KDV %20 (fiyatlar KDV dahil)
+
+async function saveOrder(
+  form: Record<string, string>,
+  items: CartItem[],
+  total: number,
+  paymentMethod: string
+) {
+  try {
+    const subtotal = Math.round(total / 1.2); // KDV hariç
+    const taxAmount = total - subtotal;
+    const address = [
+      form.street, form.houseNo, form.apartmentNo,
+      form.neighborhood, form.district, form.province,
+    ].filter(Boolean).join(", ");
+
+    const { rows } = await pool.sql`
+      INSERT INTO orders (
+        status, total_price, subtotal, tax_rate, tax_amount,
+        customer_name, customer_email, customer_phone,
+        shipping_address, shipping_status, payment_method,
+        notes, items_snapshot
+      ) VALUES (
+        'pending', ${total}, ${subtotal}, ${TAX_RATE}, ${taxAmount},
+        ${form.name || ''}, ${form.email || ''}, ${form.phone || ''},
+        ${address}, 'pending', ${paymentMethod},
+        ${form.notes || ''}, ${JSON.stringify(items.map(i => ({
+          product_id: i.product.id,
+          name: i.product.name.tr,
+          quantity: i.quantity,
+          unit_price: i.product.priceMin,
+        })))}
+      ) RETURNING id
+    `;
+
+    const orderId = rows[0].id;
+    for (const item of items) {
+      await pool.sql`
+        INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+        VALUES (${orderId}, ${Number(item.product.id) || null}, ${item.quantity}, ${item.product.priceMin})
+      `;
+    }
+    return orderId;
+  } catch (e) {
+    console.error("Order save error:", e);
+    return null;
+  }
+}
+
 // ── Main handler ───────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   try {
@@ -214,13 +264,19 @@ export async function POST(req: NextRequest) {
     const settings = await getSettings();
     const gateway = settings.active_gateway || "none";
 
-    if (gateway === "iyzico") return NextResponse.json(await payWithIyzico(settings, form, items, total));
-    if (gateway === "paytr")  return NextResponse.json(await payWithPaytr(settings, form, items, total));
-    if (gateway === "stripe") return NextResponse.json(await payWithStripe(settings, items, total));
-    if (gateway === "paypal") return NextResponse.json(await payWithPaypal(settings, items, total));
+    let result;
+    if (gateway === "iyzico") result = await payWithIyzico(settings, form, items, total);
+    else if (gateway === "paytr")  result = await payWithPaytr(settings, form, items, total);
+    else if (gateway === "stripe") result = await payWithStripe(settings, items, total);
+    else if (gateway === "paypal") result = await payWithPaypal(settings, items, total);
+    else result = { success: true, demo: true };
 
-    // gateway === "none" — demo / custom method
-    return NextResponse.json({ success: true, demo: true });
+    // Stripe/PayTR redirect to external page — save order optimistically
+    if (result.success) {
+      await saveOrder(form, items, total, gateway);
+    }
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Payment error:", error);
     return NextResponse.json({ success: false, message: "Sunucu hatası." }, { status: 500 });

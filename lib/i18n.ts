@@ -166,6 +166,8 @@ export const dictionary = {
     adminPaymentDetails: "Bilgi / IBAN / URL",
     adminAddUser: "Kullanıcı Ekle",
     adminConfirmDeleteUser: "Bu kullanıcıyı silmek istediğinize emin misiniz?",
+    adminCargo: "Kargo Yönetimi",
+    adminMarketing: "Pazarlama & Satış",
   },
   en: {
     brand: "BERK-HOMEAVM",
@@ -332,6 +334,8 @@ export const dictionary = {
     adminPaymentDetails: "Details / IBAN / URL",
     adminAddUser: "Add User",
     adminConfirmDeleteUser: "Are you sure you want to delete this user?",
+    adminCargo: "Cargo Management",
+    adminMarketing: "Marketing & Sales",
   }
 };
 

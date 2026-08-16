@@ -94,6 +94,8 @@ export default function CheckoutPage() {
   }, []);
 
   const total = items.reduce((sum, i) => sum + i.product.priceMin * i.quantity, 0);
+  const subtotalBeforeTax = Math.round(total / 1.2);
+  const taxAmount = total - subtotalBeforeTax;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -252,8 +254,16 @@ export default function CheckoutPage() {
                 <span>{formatPrice(i.product.priceMin * i.quantity, locale)} {locale === "tr" ? "₺" : "TRY"}</span>
               </div>
             ))}
+            <div className="flex justify-between px-4 py-2 border-t text-gray-500 text-xs">
+              <span>KDV Hariç</span>
+              <span>{formatPrice(subtotalBeforeTax, locale)} {locale === "tr" ? "₺" : "TRY"}</span>
+            </div>
+            <div className="flex justify-between px-4 py-2 border-t text-gray-500 text-xs">
+              <span>KDV (%20)</span>
+              <span>{formatPrice(taxAmount, locale)} {locale === "tr" ? "₺" : "TRY"}</span>
+            </div>
             <div className="flex justify-between px-4 py-3 border-t font-extrabold">
-              <span>{t("total")}</span>
+              <span>{t("total")} (KDV Dahil)</span>
               <span className="text-gold">{formatPrice(total, locale)} {locale === "tr" ? "₺" : "TRY"}</span>
             </div>
           </div>
