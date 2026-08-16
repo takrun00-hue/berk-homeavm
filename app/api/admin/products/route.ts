@@ -7,12 +7,17 @@ export async function GET(req: NextRequest) {
   if (!checkAdmin(req))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { rows } = await pool.sql`
-    SELECT p.*, c.name_tr as cat_tr FROM products p
-    LEFT JOIN categories c ON p.category_id = c.id
-    ORDER BY p.sort_order ASC
-  `;
-  return NextResponse.json({ products: rows });
+  try {
+    const { rows } = await pool.sql`
+      SELECT p.*, c.name_tr as cat_tr FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      ORDER BY p.sort_order ASC
+    `;
+    return NextResponse.json({ products: rows });
+  } catch (e) {
+    console.error("Admin products GET error:", e);
+    return NextResponse.json({ error: "Database error" }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {

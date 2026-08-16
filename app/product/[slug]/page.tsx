@@ -17,7 +17,7 @@ export default function ProductDetailPage({
   const [added, setAdded] = useState(false);
   const [selectedVariantIdx, setSelectedVariantIdx] = useState<number | null>(null);
 
-  const product = products.find((p) => p.slug === params.slug);
+  const product = products.find((p) => p.slug === decodeURIComponent(params.slug));
 
   const handleAdd = () => {
     if (!product) return;

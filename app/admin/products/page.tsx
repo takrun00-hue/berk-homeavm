@@ -64,11 +64,16 @@ export default function AdminProductsPage() {
 
   const load = () => {
     fetch("/api/admin/products")
-      .then((r) => r.json())
-      .then((d) => setProducts(d.products || []));
+      .then((r) => {
+        if (!r.ok) throw new Error(`Ürünler yüklenemedi (HTTP ${r.status})`);
+        return r.json();
+      })
+      .then((d) => setProducts(d.products || []))
+      .catch((e: Error) => setError(e.message));
     fetch("/api/admin/categories")
       .then((r) => r.json())
-      .then((d) => setCategories(d.categories || []));
+      .then((d) => setCategories(d.categories || []))
+      .catch(() => {});
   };
 
   useEffect(() => {
@@ -456,6 +461,9 @@ export default function AdminProductsPage() {
         </form>
 
         <div className="space-y-2">
+          {products.length === 0 && !error && (
+            <p className="text-xs text-gray-400 text-center py-4">Ürün bulunamadı.</p>
+          )}
           {products.map((p, idx) => (
             <div
               key={p.id}
