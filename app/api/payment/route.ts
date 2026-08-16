@@ -228,18 +228,20 @@ async function notifyCargo(orderId: number, form: Record<string, string>, items:
   } catch {}
 }
 
-// ── Save order to DB ────────────────────────────────────────────────────────
+// ── Get effective tax rate from tier system ────────────────────────────────
 async function getEffectiveTaxRate(productId: string | number, settings: Record<string, string>): Promise<number> {
   try {
     const { rows } = await pool.sql`
-      SELECT COALESCE(p.tax_rate, c.tax_rate) as effective_rate
+      SELECT COALESCE(p.tax_tier, c.tax_tier) as tier
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.id = ${Number(productId)}
     `;
-    if (rows[0]?.effective_rate !== null && rows[0]?.effective_rate !== undefined) return Number(rows[0].effective_rate);
+    const tier = rows[0]?.tier || "standard";
+    const tierKey = `tax_tier_${tier}`;
+    return Number(settings[tierKey] || settings.tax_tier_standard) || 20;
   } catch {}
-  return Number(settings.default_tax_rate) || 20;
+  return Number(settings.tax_tier_standard) || 20;
 }
 
 async function saveOrder(

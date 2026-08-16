@@ -21,9 +21,21 @@ export async function GET(req: NextRequest) {
     await pool.sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS notes TEXT DEFAULT ''`;
     await pool.sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS items_snapshot TEXT DEFAULT '[]'`;
 
-    // Tax rate columns
-    await pool.sql`ALTER TABLE categories ADD COLUMN IF NOT EXISTS tax_rate INTEGER DEFAULT NULL`;
-    await pool.sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS tax_rate INTEGER DEFAULT NULL`;
+    // Tax rate columns (store tier name, not percentage)
+    await pool.sql`ALTER TABLE categories ADD COLUMN IF NOT EXISTS tax_tier TEXT DEFAULT NULL`;
+    await pool.sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS tax_tier TEXT DEFAULT NULL`;
+
+    // Initialize tax tiers in site_settings if not present
+    await pool.sql`
+      INSERT INTO site_settings (key, value) VALUES
+        ('tax_tier_standard', '20'),
+        ('tax_tier_reduced', '10'),
+        ('tax_tier_special', '1'),
+        ('member_discount', '0'),
+        ('loyalty_min_orders', '5'),
+        ('loyalty_discount', '0')
+      ON CONFLICT (key) DO NOTHING
+    `;
 
     return NextResponse.json({ success: true, message: "Migration tamamlandı." });
   } catch (e) {
