@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Heart, ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
@@ -11,6 +12,13 @@ import { useCart } from "@/context/CartContext";
 export default function ProductCard({ product }: { product: Product }) {
   const { locale } = useLanguage();
   const { addToCart } = useCart();
+  const [activeVariant, setActiveVariant] = useState<number | null>(null);
+
+  const variants = product.variants || [];
+  const displayImage =
+    activeVariant !== null && variants[activeVariant]?.image
+      ? variants[activeVariant].image
+      : product.image;
 
   return (
     <motion.div
@@ -19,12 +27,12 @@ export default function ProductCard({ product }: { product: Product }) {
     >
       <Link href={`/product/${product.slug}`}>
         <div className="aspect-square bg-gray-100 overflow-hidden">
-          {product.image ? (
+          {displayImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={product.image}
+              src={displayImage}
               alt={product.name[locale]}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-all duration-300"
               onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
             />
           ) : (
@@ -39,7 +47,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
       <button
         onClick={() => addToCart(product)}
-        className="absolute bottom-3 left-3 bg-gold text-black rounded-md p-2 shadow"
+        className="absolute top-3 left-3 bg-gold text-black rounded-full p-2 shadow"
       >
         <ShoppingCart size={16} />
       </button>
@@ -52,6 +60,28 @@ export default function ProductCard({ product }: { product: Product }) {
         )}
         <h3 className="font-bold text-sm">{product.name[locale]}</h3>
         <p className="text-gray-400 text-xs mt-1">{product.category[locale]}</p>
+
+        {variants.length > 0 && (
+          <div className="flex justify-center gap-1.5 mt-2">
+            {variants.map((v, i) => (
+              <button
+                key={i}
+                title={v.name}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActiveVariant(activeVariant === i ? null : i);
+                }}
+                className={`w-5 h-5 rounded-full border-2 transition-all ${
+                  activeVariant === i
+                    ? "border-black scale-110"
+                    : "border-gray-300 hover:border-gray-500"
+                }`}
+                style={{ backgroundColor: v.hex }}
+              />
+            ))}
+          </div>
+        )}
+
         {(product.discountPercent ?? 0) > 0 ? (
           <div className="mt-1">
             <p className="text-gray-400 text-xs line-through">

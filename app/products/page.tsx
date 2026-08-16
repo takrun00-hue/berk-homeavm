@@ -16,12 +16,7 @@ function ProductsContent() {
   const { locale, t } = useLanguage();
 
   const filtered = categorySlug
-    ? products.filter((p) => {
-        const cat = categories.find((c) => c.slug === categorySlug);
-        return cat
-          ? p.category.tr === cat.name.tr || p.category.en === cat.name.en
-          : false;
-      })
+    ? products.filter((p) => p.categorySlug === categorySlug)
     : products;
 
   const loading = productsLoading || categoriesLoading;

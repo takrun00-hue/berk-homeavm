@@ -14,6 +14,7 @@ export interface Product {
   slug: string;
   name: LocalizedText;
   category: LocalizedText;
+  categorySlug?: string;
   priceMin: number;
   priceMax: number;
   image: string;
