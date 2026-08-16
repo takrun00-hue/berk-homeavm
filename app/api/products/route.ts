@@ -77,6 +77,7 @@ export async function GET() {
              p.image, p.description_tr, p.description_en,
              COALESCE(p.discount_percent, 0) as discount_percent,
              COALESCE(p.variants, '[]') as variants,
+             p.category_id,
              c.name_tr as cat_tr, c.name_en as cat_en, c.slug as cat_slug
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
@@ -103,6 +104,7 @@ export async function GET() {
         name: { tr: r.name_tr, en: r.name_en },
         category: { tr: r.cat_tr || "", en: r.cat_en || "" },
         categorySlug: r.cat_slug || "",
+        categoryId: r.category_id ? String(r.category_id) : null,
         priceMin: Number(r.price_min) || 0,
         priceMax: Number(r.price_max) || 0,
         image: resolved,

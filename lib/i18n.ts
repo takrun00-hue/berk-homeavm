@@ -168,6 +168,7 @@ export const dictionary = {
     adminConfirmDeleteUser: "Bu kullanıcıyı silmek istediğinize emin misiniz?",
     adminCargo: "Kargo Yönetimi",
     adminMarketing: "Pazarlama & Satış",
+    adminTax: "Vergi Ayarları",
   },
   en: {
     brand: "BERK-HOMEAVM",
@@ -336,6 +337,7 @@ export const dictionary = {
     adminConfirmDeleteUser: "Are you sure you want to delete this user?",
     adminCargo: "Cargo Management",
     adminMarketing: "Marketing & Sales",
+    adminTax: "Tax Settings",
   }
 };
 

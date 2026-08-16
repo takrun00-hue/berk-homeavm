@@ -21,6 +21,10 @@ export async function GET(req: NextRequest) {
     await pool.sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS notes TEXT DEFAULT ''`;
     await pool.sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS items_snapshot TEXT DEFAULT '[]'`;
 
+    // Tax rate columns
+    await pool.sql`ALTER TABLE categories ADD COLUMN IF NOT EXISTS tax_rate INTEGER DEFAULT NULL`;
+    await pool.sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS tax_rate INTEGER DEFAULT NULL`;
+
     return NextResponse.json({ success: true, message: "Migration tamamlandı." });
   } catch (e) {
     console.error("Migration error:", e);

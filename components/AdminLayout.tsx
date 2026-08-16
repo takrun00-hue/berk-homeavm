@@ -20,6 +20,7 @@ import {
   Image,
   Truck,
   TrendingUp,
+  Receipt,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -41,7 +42,8 @@ export default function AdminLayout({
     | "adminQR"
     | "adminAnalytics"
     | "adminCargo"
-    | "adminMarketing";
+    | "adminMarketing"
+    | "adminTax";
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -83,6 +85,7 @@ export default function AdminLayout({
     { href: "/admin/analytics", labelKey: "adminAnalytics" as const, icon: BarChart2 },
     { href: "/admin/cargo", labelKey: "adminCargo" as const, icon: Truck },
     { href: "/admin/marketing", labelKey: "adminMarketing" as const, icon: TrendingUp },
+    { href: "/admin/tax", labelKey: "adminTax" as const, icon: Receipt },
   ];
 
   const handleLogout = async () => {

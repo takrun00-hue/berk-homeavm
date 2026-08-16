@@ -207,17 +207,53 @@ interface CartItem {
   quantity: number;
 }
 
+// ── Cargo auto-notification ─────────────────────────────────────────────────
+async function notifyCargo(orderId: number, form: Record<string, string>, items: CartItem[], total: number, settings: Record<string, string>) {
+  const webhookUrl = settings.cargo_webhook_url;
+  if (!webhookUrl) return;
+  try {
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        event: "new_order",
+        orderId,
+        customer: { name: form.name, phone: form.phone, email: form.email },
+        address: [form.street, form.houseNo, form.apartmentNo, form.neighborhood, form.district, form.province].filter(Boolean).join(", "),
+        items: items.map((i) => ({ name: i.product.name.tr, qty: i.quantity, price: i.product.priceMin })),
+        total,
+        timestamp: new Date().toISOString(),
+      }),
+    });
+  } catch {}
+}
+
 // ── Save order to DB ────────────────────────────────────────────────────────
-const TAX_RATE = 20; // KDV %20 (fiyatlar KDV dahil)
+async function getEffectiveTaxRate(productId: string | number, settings: Record<string, string>): Promise<number> {
+  try {
+    const { rows } = await pool.sql`
+      SELECT COALESCE(p.tax_rate, c.tax_rate) as effective_rate
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.id = ${Number(productId)}
+    `;
+    if (rows[0]?.effective_rate !== null && rows[0]?.effective_rate !== undefined) return Number(rows[0].effective_rate);
+  } catch {}
+  return Number(settings.default_tax_rate) || 20;
+}
 
 async function saveOrder(
   form: Record<string, string>,
   items: CartItem[],
   total: number,
-  paymentMethod: string
-) {
+  paymentMethod: string,
+  settings: Record<string, string>
+): Promise<{ orderId: number; taxRate: number } | null> {
   try {
-    const subtotal = Math.round(total / 1.2); // KDV hariç
+    // Use tax rate from first item's product (or default)
+    const taxRate = items.length > 0 ? await getEffectiveTaxRate(items[0].product.id, settings) : (Number(settings.default_tax_rate) || 20);
+    const taxMultiplier = 1 + taxRate / 100;
+    const subtotal = Math.round(total / taxMultiplier);
     const taxAmount = total - subtotal;
     const address = [
       form.street, form.houseNo, form.apartmentNo,
@@ -231,7 +267,7 @@ async function saveOrder(
         shipping_address, shipping_status, payment_method,
         notes, items_snapshot
       ) VALUES (
-        'pending', ${total}, ${subtotal}, ${TAX_RATE}, ${taxAmount},
+        'pending', ${total}, ${subtotal}, ${taxRate}, ${taxAmount},
         ${form.name || ''}, ${form.email || ''}, ${form.phone || ''},
         ${address}, 'pending', ${paymentMethod},
         ${form.notes || ''}, ${JSON.stringify(items.map(i => ({
@@ -250,7 +286,7 @@ async function saveOrder(
         VALUES (${orderId}, ${Number(item.product.id) || null}, ${item.quantity}, ${item.product.priceMin})
       `;
     }
-    return orderId;
+    return { orderId, taxRate };
   } catch (e) {
     console.error("Order save error:", e);
     return null;
@@ -271,9 +307,12 @@ export async function POST(req: NextRequest) {
     else if (gateway === "paypal") result = await payWithPaypal(settings, items, total);
     else result = { success: true, demo: true };
 
-    // Stripe/PayTR redirect to external page — save order optimistically
+    // Save order and trigger cargo notification
     if (result.success) {
-      await saveOrder(form, items, total, gateway);
+      const saved = await saveOrder(form, items, total, gateway, settings);
+      if (saved) {
+        notifyCargo(saved.orderId, form, items, total, settings).catch(() => {});
+      }
     }
 
     return NextResponse.json(result);

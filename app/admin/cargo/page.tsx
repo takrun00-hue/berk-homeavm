@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import AdminLayout from "@/components/AdminLayout";
-import { Truck, Package, CheckCircle, Clock, AlertCircle, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Truck, Package, CheckCircle, Clock, AlertCircle, Search, ChevronDown, ChevronUp, Clipboard, X } from "lucide-react";
 
 interface OrderItem { id: number; name: string; quantity: number; unit_price: number; }
 interface Order {
@@ -55,6 +55,8 @@ export default function CargoPage() {
   const [saving, setSaving] = useState<number | null>(null);
   const [saved, setSaved] = useState<number | null>(null);
   const [migrated, setMigrated] = useState(false);
+  const [manifest, setManifest] = useState<{ text: string; orderId: number } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     // Auto-migrate DB columns on first load
@@ -98,6 +100,36 @@ export default function CargoPage() {
     setSaving(null);
     setSaved(id);
     setTimeout(() => setSaved(null), 2000);
+  };
+
+  const generateManifest = (order: Order) => {
+    const lines = [
+      `📦 KARGO TALEBİ — Sipariş #${order.id}`,
+      `Tarih: ${new Date().toLocaleDateString("tr-TR")}`,
+      ``,
+      `── MÜŞTERİ BİLGİLERİ ──`,
+      `Ad: ${order.customer_name || "—"}`,
+      `Telefon: ${order.customer_phone || "—"}`,
+      `E-posta: ${order.customer_email || "—"}`,
+      ``,
+      `── TESLİMAT ADRESİ ──`,
+      order.shipping_address || "—",
+      ``,
+      `── ÜRÜNLER ──`,
+      ...(order.items || []).map(i => `• ${i.name} × ${i.quantity} — ${formatPrice(i.unit_price * i.quantity)} ₺`),
+      ``,
+      `Toplam: ${formatPrice(order.total_price)} ₺`,
+      `Ödeme: ${order.payment_method || "—"}`,
+      order.cargo_company ? `Kargo: ${order.cargo_company}` : "",
+      order.notes ? `Not: ${order.notes}` : "",
+    ].filter(l => l !== undefined);
+    setManifest({ text: lines.join("\n"), orderId: order.id });
+    setCopied(false);
+  };
+
+  const copyManifest = () => {
+    if (!manifest) return;
+    navigator.clipboard.writeText(manifest.text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
   };
 
   const counts = {
@@ -291,13 +323,19 @@ export default function CargoPage() {
                           />
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center flex-wrap gap-2">
                         <button
                           onClick={() => save(order.id)}
                           disabled={!isDirty || saving === order.id}
                           className="px-4 py-2 bg-black text-gold text-xs font-bold rounded disabled:opacity-40 flex items-center gap-2"
                         >
                           {saving === order.id ? "Kaydediliyor..." : "Kaydet"}
+                        </button>
+                        <button
+                          onClick={() => generateManifest(order)}
+                          className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded flex items-center gap-1.5"
+                        >
+                          <Clipboard size={12} /> Kargo Talep Et
                         </button>
                         {saved === order.id && (
                           <span className="text-green-600 text-xs flex items-center gap-1">
@@ -334,6 +372,43 @@ export default function CargoPage() {
           </span>
         ))}
       </div>
+
+      {/* Cargo manifest modal */}
+      {manifest && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setManifest(null)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b">
+              <div className="flex items-center gap-2">
+                <Truck size={18} className="text-blue-600" />
+                <h3 className="font-bold text-sm">Kargo Talep Formu — #{manifest.orderId}</h3>
+              </div>
+              <button onClick={() => setManifest(null)}><X size={18} className="text-gray-400 hover:text-gray-600" /></button>
+            </div>
+            <div className="p-5">
+              <pre className="text-xs bg-gray-50 rounded-lg p-4 whitespace-pre-wrap font-mono border text-gray-700 max-h-72 overflow-y-auto">
+                {manifest.text}
+              </pre>
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={copyManifest}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-black text-gold font-bold text-sm rounded-lg"
+                >
+                  {copied ? <><CheckCircle size={14} /> Kopyalandı!</> : <><Clipboard size={14} /> Kopyala</>}
+                </button>
+                <button
+                  onClick={() => window.print()}
+                  className="px-4 py-2.5 border rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50"
+                >
+                  Yazdır
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-3 text-center">
+                Bu metni kopyalayarak kargo şirketine WhatsApp, e-posta veya sistem üzerinden iletebilirsiniz.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }

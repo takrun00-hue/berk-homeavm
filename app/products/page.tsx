@@ -15,8 +15,17 @@ function ProductsContent() {
   const { categories, loading: categoriesLoading } = useCategories();
   const { locale, t } = useLanguage();
 
+  const activeCat = categorySlug ? categories.find((c) => c.slug === categorySlug) : null;
   const filtered = categorySlug
-    ? products.filter((p) => p.categorySlug === categorySlug)
+    ? products.filter((p) => {
+        // Primary: match by DB category ID (most reliable)
+        if (activeCat && p.categoryId) return p.categoryId === activeCat.id;
+        // Secondary: match by category slug on product
+        if (p.categorySlug) return p.categorySlug === categorySlug;
+        // Fallback: match by category name text
+        if (activeCat) return p.category.tr === activeCat.name.tr || p.category.en === activeCat.name.en;
+        return false;
+      })
     : products;
 
   const loading = productsLoading || categoriesLoading;
