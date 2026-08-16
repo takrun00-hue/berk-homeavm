@@ -52,6 +52,15 @@ export async function GET(req: NextRequest) {
   }
 }
 
+async function logChange(entityType: string, entityId: string | null, action: string, oldVal: string | null, newVal: string) {
+  try {
+    await pool.sql`
+      INSERT INTO change_log (entity_type, entity_id, action, old_value, new_value, changed_by)
+      VALUES (${entityType}, ${entityId ? Number(entityId) : null}, ${action}, ${oldVal}, ${newVal}, 'admin')
+    `;
+  } catch {}
+}
+
 export async function PATCH(req: NextRequest) {
   if (!checkAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -63,10 +72,13 @@ export async function PATCH(req: NextRequest) {
       const rate = Number(taxTier);
       if (isNaN(rate) || rate < 0 || rate > 100) return NextResponse.json({ error: "Geçersiz oran." }, { status: 400 });
       const key = `tax_${type}`;
+      const { rows } = await pool.sql`SELECT value FROM site_settings WHERE key = ${key}`;
+      const oldValue = rows[0]?.value;
       await pool.sql`
         INSERT INTO site_settings (key, value) VALUES (${key}, ${String(rate)})
         ON CONFLICT (key) DO UPDATE SET value = ${String(rate)}
       `;
+      await logChange("tax_tier", type, "update", oldValue || null, String(rate));
       return NextResponse.json({ success: true });
     }
 
@@ -74,28 +86,39 @@ export async function PATCH(req: NextRequest) {
       const val = Number(taxTier);
       if (isNaN(val) || val < 0) return NextResponse.json({ error: "Geçersiz değer." }, { status: 400 });
       const key = `${type === "member-discount" ? "member_discount" : type === "loyalty-min-orders" ? "loyalty_min_orders" : "loyalty_discount"}`;
+      const { rows } = await pool.sql`SELECT value FROM site_settings WHERE key = ${key}`;
+      const oldValue = rows[0]?.value;
       await pool.sql`
         INSERT INTO site_settings (key, value) VALUES (${key}, ${String(val)})
         ON CONFLICT (key) DO UPDATE SET value = ${String(val)}
       `;
+      await logChange("membership_setting", type, "update", oldValue || null, String(val));
       return NextResponse.json({ success: true });
     }
 
     if (type === "category" && id) {
+      const { rows } = await pool.sql`SELECT tax_tier FROM categories WHERE id = ${Number(id)}`;
+      const oldValue = rows[0]?.tax_tier || null;
+      const newValue = !taxTier || taxTier === "standard" ? "" : taxTier;
       if (!taxTier || taxTier === "standard") {
         await pool.sql`UPDATE categories SET tax_tier = '' WHERE id = ${Number(id)}`;
       } else {
         await pool.sql`UPDATE categories SET tax_tier = ${taxTier} WHERE id = ${Number(id)}`;
       }
+      await logChange("category", id, "update", oldValue, newValue || "standard");
       return NextResponse.json({ success: true });
     }
 
     if (type === "product" && id) {
+      const { rows } = await pool.sql`SELECT tax_tier FROM products WHERE id = ${Number(id)}`;
+      const oldValue = rows[0]?.tax_tier || null;
+      const newValue = !taxTier || taxTier === "standard" ? "" : taxTier;
       if (!taxTier || taxTier === "standard") {
         await pool.sql`UPDATE products SET tax_tier = '' WHERE id = ${Number(id)}`;
       } else {
         await pool.sql`UPDATE products SET tax_tier = ${taxTier} WHERE id = ${Number(id)}`;
       }
+      await logChange("product", id, "update", oldValue, newValue || "standard");
       return NextResponse.json({ success: true });
     }
 

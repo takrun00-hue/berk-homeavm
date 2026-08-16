@@ -25,6 +25,23 @@ export async function GET(req: NextRequest) {
     await pool.sql`ALTER TABLE categories ADD COLUMN IF NOT EXISTS tax_tier TEXT DEFAULT NULL`;
     await pool.sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS tax_tier TEXT DEFAULT NULL`;
 
+    // Change log for tracking admin updates (prevent overwrites, notify bots)
+    await pool.sql`
+      CREATE TABLE IF NOT EXISTS change_log (
+        id SERIAL PRIMARY KEY,
+        entity_type VARCHAR(50) NOT NULL,
+        entity_id INTEGER,
+        action VARCHAR(20) NOT NULL,
+        old_value TEXT,
+        new_value TEXT,
+        changed_by VARCHAR(100) DEFAULT 'admin',
+        changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        synced BOOLEAN DEFAULT FALSE
+      )
+    `;
+    await pool.sql`CREATE INDEX IF NOT EXISTS idx_change_log_synced ON change_log(synced)`;
+    await pool.sql`CREATE INDEX IF NOT EXISTS idx_change_log_entity ON change_log(entity_type, entity_id)`;
+
     // Initialize tax tiers in site_settings if not present
     await pool.sql`
       INSERT INTO site_settings (key, value) VALUES
