@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatPrice } from "@/lib/utils";
+import { DEFAULT_TAX_RATES, summariseTax } from "@/lib/tax";
 import { CreditCard, Wallet, Building2 } from "lucide-react";
 
 interface CustomMethod { name: string; details: string; }
@@ -93,9 +94,17 @@ export default function CheckoutPage() {
       .finally(() => setGwLoading(false));
   }, []);
 
-  const total = items.reduce((sum, i) => sum + i.product.priceMin * i.quantity, 0);
-  const subtotalBeforeTax = Math.round(total / 1.2);
-  const taxAmount = total - subtotalBeforeTax;
+  // Each product carries its own VAT rate, so the cart is summed per line
+  // rather than divided by one blended rate.
+  const taxSummary = summariseTax(
+    items.map((i) => ({
+      gross: i.product.priceMin * i.quantity,
+      taxRate: i.product.taxRate ?? DEFAULT_TAX_RATES.standard,
+    }))
+  );
+  const total = taxSummary.gross;
+  const subtotalBeforeTax = Math.round(taxSummary.net);
+  const taxAmount = Math.round(taxSummary.tax);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -258,10 +267,20 @@ export default function CheckoutPage() {
               <span>KDV Hariç</span>
               <span>{formatPrice(subtotalBeforeTax, locale)} {locale === "tr" ? "₺" : "TRY"}</span>
             </div>
-            <div className="flex justify-between px-4 py-2 border-t text-gray-500 text-xs">
-              <span>KDV (%20)</span>
-              <span>{formatPrice(taxAmount, locale)} {locale === "tr" ? "₺" : "TRY"}</span>
-            </div>
+            {/* One line per rate present, so a mixed-rate basket is itemised
+                instead of hidden behind a single blended figure. */}
+            {taxSummary.byRate.map((b) => (
+              <div key={b.rate} className="flex justify-between px-4 py-2 border-t text-gray-500 text-xs">
+                <span>KDV (%{b.rate})</span>
+                <span>{formatPrice(Math.round(b.tax), locale)} {locale === "tr" ? "₺" : "TRY"}</span>
+              </div>
+            ))}
+            {taxSummary.byRate.length > 1 && (
+              <div className="flex justify-between px-4 py-2 border-t text-gray-600 text-xs font-semibold">
+                <span>Toplam KDV</span>
+                <span>{formatPrice(taxAmount, locale)} {locale === "tr" ? "₺" : "TRY"}</span>
+              </div>
+            )}
             <div className="flex justify-between px-4 py-3 border-t font-extrabold">
               <span>{t("total")} (KDV Dahil)</span>
               <span className="text-gold">{formatPrice(total, locale)} {locale === "tr" ? "₺" : "TRY"}</span>
