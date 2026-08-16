@@ -54,6 +54,25 @@ export async function GET(req: NextRequest) {
       ON CONFLICT (key) DO NOTHING
     `;
 
+    // Cargo companies the admin can manage, replacing the previously hardcoded
+    // list. Seeded with the original names so existing orders keep matching.
+    await pool.sql`
+      CREATE TABLE IF NOT EXISTS cargo_companies (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        tracking_url TEXT DEFAULT '',
+        phone TEXT DEFAULT '',
+        is_active BOOLEAN DEFAULT true
+      )
+    `;
+    await pool.sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS cargo_company_id INTEGER REFERENCES cargo_companies(id)`;
+    await pool.sql`
+      INSERT INTO cargo_companies (name) VALUES
+        ('PTT Kargo'), ('Yurtiçi Kargo'), ('Aras Kargo'), ('MNG Kargo'),
+        ('Sürat Kargo'), ('UPS'), ('DHL'), ('Diğer')
+      ON CONFLICT (name) DO NOTHING
+    `;
+
     return NextResponse.json({ success: true, message: "Migration tamamlandı." });
   } catch (e) {
     console.error("Migration error:", e);

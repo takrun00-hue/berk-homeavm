@@ -167,6 +167,7 @@ export const dictionary = {
     adminAddUser: "Kullanıcı Ekle",
     adminConfirmDeleteUser: "Bu kullanıcıyı silmek istediğinize emin misiniz?",
     adminCargo: "Kargo Yönetimi",
+    adminCargoCompanies: "Kargo Firmaları",
     adminMarketing: "Pazarlama & Satış",
     adminTax: "Vergi Ayarları",
   },
@@ -336,6 +337,7 @@ export const dictionary = {
     adminAddUser: "Add User",
     adminConfirmDeleteUser: "Are you sure you want to delete this user?",
     adminCargo: "Cargo Management",
+    adminCargoCompanies: "Cargo Companies",
     adminMarketing: "Marketing & Sales",
     adminTax: "Tax Settings",
   }
