@@ -33,7 +33,9 @@ const SHIPPING_STATUSES = [
   { value: "cancelled",  label: "İptal",             color: "bg-red-100 text-red-700" },
 ];
 
-const CARGO_COMPANIES = ["PTT Kargo", "Yurtiçi Kargo", "Aras Kargo", "MNG Kargo", "Sürat Kargo", "UPS", "DHL", "Diğer"];
+// Used only until the cargo_companies table has been populated, so the dropdown
+// is never empty on an environment that has not run the migration yet.
+const FALLBACK_CARGO_COMPANIES = ["PTT Kargo", "Yurtiçi Kargo", "Aras Kargo", "MNG Kargo", "Sürat Kargo", "UPS", "DHL", "Diğer"];
 
 function formatPrice(n: number) {
   return new Intl.NumberFormat("tr-TR").format(n);
@@ -57,6 +59,7 @@ export default function CargoPage() {
   const [migrated, setMigrated] = useState(false);
   const [manifest, setManifest] = useState<{ text: string; orderId: number } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [cargoCompanies, setCargoCompanies] = useState<string[]>(FALLBACK_CARGO_COMPANIES);
 
   useEffect(() => {
     // Auto-migrate DB columns on first load
@@ -70,6 +73,18 @@ export default function CargoPage() {
       .then(d => setOrders(d.orders || []))
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
+
+    // Companies are admin-managed on /admin/cargo-companies; keep the hardcoded
+    // fallback if the table is empty or unreachable.
+    fetch("/api/admin/cargo-companies")
+      .then(r => r.json())
+      .then(d => {
+        const names = (d.companies || [])
+          .filter((c: { is_active: boolean }) => c.is_active)
+          .map((c: { name: string }) => c.name);
+        if (names.length) setCargoCompanies(names);
+      })
+      .catch(() => {});
   }, [migrated]);
 
   const filtered = orders.filter(o => {
@@ -310,7 +325,7 @@ export default function CargoPage() {
                             className="w-full border rounded px-2 py-2 text-sm bg-white"
                           >
                             <option value="">Seçin...</option>
-                            {CARGO_COMPANIES.map(c => <option key={c} value={c}>{c}</option>)}
+                            {cargoCompanies.map(c => <option key={c} value={c}>{c}</option>)}
                           </select>
                         </div>
                         <div>
