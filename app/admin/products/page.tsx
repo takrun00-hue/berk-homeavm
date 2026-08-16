@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronUp, ChevronDown, Plus, Trash2 } from "lucide-react";
+import { ChevronUp, ChevronDown, Plus, Trash2, AlertCircle } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -472,8 +472,15 @@ export default function AdminProductsPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={p.image} alt={p.name_tr} className="w-14 h-14 rounded object-cover shrink-0 border" />
               <div className="flex-1">
-                <p className="font-bold">{locale === "tr" ? p.name_tr : p.name_en}</p>
-                <p className="text-gray-400 text-xs">{p.cat_tr || "-"}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-bold">{locale === "tr" ? p.name_tr : p.name_en}</p>
+                  {!p.category_id && (
+                    <span className="flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-bold">
+                      <AlertCircle size={11} /> Kategori yok
+                    </span>
+                  )}
+                </div>
+                <p className="text-gray-400 text-xs">{p.cat_tr || "Atanmamış"}</p>
               </div>
               <div className="flex flex-col">
                 <button
