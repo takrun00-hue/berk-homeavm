@@ -42,6 +42,23 @@ export async function GET(req: NextRequest) {
     await pool.sql`CREATE INDEX IF NOT EXISTS idx_change_log_synced ON change_log(synced)`;
     await pool.sql`CREATE INDEX IF NOT EXISTS idx_change_log_entity ON change_log(entity_type, entity_id)`;
 
+    // Admin reports table (daily business reports)
+    await pool.sql`
+      CREATE TABLE IF NOT EXISTS admin_reports (
+        id SERIAL PRIMARY KEY,
+        report_date DATE NOT NULL,
+        business_name VARCHAR(100) NOT NULL,
+        report_content TEXT NOT NULL,
+        status VARCHAR(20) DEFAULT 'healthy',
+        sent_to_user BOOLEAN DEFAULT FALSE,
+        sent_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(report_date, business_name)
+      )
+    `;
+    await pool.sql`CREATE INDEX IF NOT EXISTS idx_admin_reports_date ON admin_reports(report_date DESC)`;
+    await pool.sql`CREATE INDEX IF NOT EXISTS idx_admin_reports_business ON admin_reports(business_name, report_date DESC)`;
+
     // Initialize tax tiers in site_settings if not present
     await pool.sql`
       INSERT INTO site_settings (key, value) VALUES
