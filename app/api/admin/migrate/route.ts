@@ -90,6 +90,11 @@ export async function GET(req: NextRequest) {
       ON CONFLICT (name) DO NOTHING
     `;
 
+    // Stock count per product. NULL means untracked (always purchasable, no
+    // count shown) so existing products keep working unchanged; a number is a
+    // tracked quantity that the storefront displays and gates purchase on.
+    await pool.sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS stock INTEGER`;
+
     return NextResponse.json({ success: true, message: "Migration tamamlandı." });
   } catch (e) {
     console.error("Migration error:", e);

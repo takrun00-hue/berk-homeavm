@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 ${message}
 `.trim();
 
-  await sendTelegramMessage(text);
+  await sendTelegramMessage({ text });
 
   return NextResponse.json({ success: true });
 }

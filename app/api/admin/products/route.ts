@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
     discount_percent,
     variants,
     tax_tier,
+    stock,
   } = await req.json();
 
   if (!slug || !name_tr || !name_en || !image) {
@@ -53,11 +54,16 @@ export async function POST(req: NextRequest) {
   const variantsJson = JSON.stringify(Array.isArray(variants) ? variants : []);
   // NULL means the product inherits its category's tier.
   const taxTier = isTaxTier(tax_tier) ? tax_tier : null;
+  // NULL means stock is not tracked; a number is clamped to a non-negative int.
+  const stockCount =
+    stock === null || stock === undefined || stock === ""
+      ? null
+      : Math.max(0, Math.floor(Number(stock)) || 0);
 
   try {
     await pool.sql`
-      INSERT INTO products (slug, name_tr, name_en, category_id, price_min, price_max, image, description_tr, description_en, sort_order, discount_percent, variants, tax_tier)
-      VALUES (${slug}, ${name_tr}, ${name_en}, ${category_id || null}, ${price_min}, ${price_max}, ${image}, ${description_tr || ""}, ${description_en || ""}, ${nextOrder}, ${discountPct}, ${variantsJson}, ${taxTier})
+      INSERT INTO products (slug, name_tr, name_en, category_id, price_min, price_max, image, description_tr, description_en, sort_order, discount_percent, variants, tax_tier, stock)
+      VALUES (${slug}, ${name_tr}, ${name_en}, ${category_id || null}, ${price_min}, ${price_max}, ${image}, ${description_tr || ""}, ${description_en || ""}, ${nextOrder}, ${discountPct}, ${variantsJson}, ${taxTier}, ${stockCount})
     `;
     syncProducts();
     return NextResponse.json({ success: true });

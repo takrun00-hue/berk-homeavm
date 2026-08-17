@@ -17,6 +17,7 @@ export default function ProductCard({ product }: { product: Product }) {
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
   const variants = product.variants || [];
+  const outOfStock = product.stock === 0;
   const displayImage =
     activeVariant !== null && variants[activeVariant]?.image
       ? variants[activeVariant].image
@@ -51,16 +52,28 @@ export default function ProductCard({ product }: { product: Product }) {
       </button>
 
       <button
-        onClick={() => addToCart(product)}
-        className="absolute top-3 left-3 bg-gold text-black rounded-full p-2 shadow"
+        onClick={() => !outOfStock && addToCart(product)}
+        disabled={outOfStock}
+        className="absolute top-3 left-3 bg-gold text-black rounded-full p-2 shadow disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <ShoppingCart size={16} />
       </button>
+
+      {outOfStock && (
+        <span className="absolute bottom-16 left-3 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+          {locale === "tr" ? "Tükendi" : "Sold out"}
+        </span>
+      )}
 
       <div className="p-3 text-center">
         {(product.discountPercent ?? 0) > 0 && (
           <span className="inline-block bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full mb-1">
             %{product.discountPercent} İNDİRİM
+          </span>
+        )}
+        {typeof product.stock === "number" && product.stock > 0 && (
+          <span className="block text-[11px] text-green-600 font-semibold">
+            {locale === "tr" ? `Stokta ${product.stock} adet` : `${product.stock} in stock`}
           </span>
         )}
         <h3 className="font-bold text-sm">{product.name[locale]}</h3>

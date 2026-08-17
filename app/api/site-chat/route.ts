@@ -93,9 +93,9 @@ ${contactInfo}`;
 
     reply += `\n\n🔗 Telegram: ${BOT_LINK}`;
 
-    await sendTelegramMessage(
-      `💻 <b>Site Chat</b>\n\n👤 Soru: ${message}\n\n🤖 Cevap: ${reply}`
-    );
+    await sendTelegramMessage({
+      text: `💻 <b>Site Chat</b>\n\n👤 Soru: ${message}\n\n🤖 Cevap: ${reply}`,
+    });
 
     return NextResponse.json({ reply });
   } catch (err) {
