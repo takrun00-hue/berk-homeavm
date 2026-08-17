@@ -2,6 +2,7 @@ import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { checkAdmin } from "@/lib/checkAdmin";
 import { syncProducts } from "@/lib/syncProducts";
+import { isTaxTier } from "@/lib/tax";
 
 export async function PUT(
   req: NextRequest,
@@ -22,10 +23,13 @@ export async function PUT(
     description_en,
     discount_percent,
     variants,
+    tax_tier,
   } = await req.json();
 
   const discountPct = Math.max(0, Math.min(100, Number(discount_percent) || 0));
   const variantsJson = JSON.stringify(Array.isArray(variants) ? variants : []);
+  // NULL means the product inherits its category's tier.
+  const taxTier = isTaxTier(tax_tier) ? tax_tier : null;
 
   await pool.sql`
     UPDATE products SET
@@ -39,7 +43,8 @@ export async function PUT(
       description_tr = ${description_tr || ""},
       description_en = ${description_en || ""},
       discount_percent = ${discountPct},
-      variants = ${variantsJson}
+      variants = ${variantsJson},
+      tax_tier = ${taxTier}
     WHERE id = ${params.id}
   `;
 

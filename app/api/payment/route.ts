@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 import crypto from "crypto";
 import Stripe from "stripe";
+import {
+  DEFAULT_TAX_RATES,
+  effectiveTaxRate,
+  summariseTax,
+  taxRatesFromSettings,
+} from "@/lib/tax";
+import { discountedUnitPrice } from "@/lib/pricing";
 
 async function getSettings() {
   const { rows } = await pool.sql`SELECT key, value FROM site_settings`;
@@ -203,6 +210,8 @@ interface CartItem {
     name: { tr: string; en: string };
     category?: { tr: string; en: string };
     priceMin: number;
+    /** Only a fallback hint — the real discount is read from the database. */
+    discountPercent?: number;
   };
   quantity: number;
 }
@@ -228,35 +237,80 @@ async function notifyCargo(orderId: number, form: Record<string, string>, items:
   } catch {}
 }
 
-// ── Get effective tax rate from tier system ────────────────────────────────
-async function getEffectiveTaxRate(productId: string | number, settings: Record<string, string>): Promise<number> {
-  try {
-    const { rows } = await pool.sql`
-      SELECT COALESCE(p.tax_tier, c.tax_tier) as tier
-      FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.id = ${Number(productId)}
-    `;
-    const tier = rows[0]?.tier || "standard";
-    const tierKey = `tax_tier_${tier}`;
-    return Number(settings[tierKey] || settings.tax_tier_standard) || 20;
-  } catch {}
-  return Number(settings.tax_tier_standard) || 20;
+// ── Price and tax rate per product, read from the database ─────────────────
+// Both are resolved here rather than taken from the request body: the client
+// posts the whole cart, so its prices are a claim, not a fact. The discount is
+// applied here too — it used to exist only where the price was printed, so a
+// discounted product was advertised at one price and charged at another.
+type PricedLine = { unitPrice: number; taxRate: number; quantity: number; item: CartItem };
+
+async function priceBasket(
+  items: CartItem[],
+  settings: Record<string, string>
+): Promise<PricedLine[]> {
+  const rates = taxRatesFromSettings(settings);
+  const fromDb = new Map<string, { unitPrice: number; taxRate: number }>();
+  const ids = items
+    .map((i) => Number(i.product.id))
+    .filter((n) => Number.isFinite(n));
+
+  if (ids.length) {
+    try {
+      const { rows } = await pool.sql`
+        SELECT p.id, p.price_min, COALESCE(p.discount_percent, 0) AS discount_percent,
+               p.tax_tier AS product_tier, c.tax_tier AS category_tier
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.id = ANY(${ids})
+      `;
+      for (const r of rows) {
+        fromDb.set(String(r.id), {
+          unitPrice: discountedUnitPrice(Number(r.price_min) || 0, r.discount_percent),
+          taxRate: effectiveTaxRate(r.product_tier, r.category_tier, rates),
+        });
+      }
+    } catch (e) {
+      console.error("Basket pricing lookup failed:", e);
+    }
+  }
+
+  return items.map((item) => {
+    const known = fromDb.get(String(item.product.id));
+    return {
+      item,
+      quantity: item.quantity,
+      // A product missing from the database (deleted mid-checkout) falls back
+      // to the posted price so the order still totals something sane.
+      unitPrice:
+        known?.unitPrice ??
+        discountedUnitPrice(item.product.priceMin, item.product.discountPercent),
+      taxRate: known?.taxRate ?? rates.standard,
+    };
+  });
+}
+
+function basketTotal(lines: PricedLine[]): number {
+  return lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
 }
 
 async function saveOrder(
   form: Record<string, string>,
-  items: CartItem[],
+  lines: PricedLine[],
   total: number,
-  paymentMethod: string,
-  settings: Record<string, string>
+  paymentMethod: string
 ): Promise<{ orderId: number; taxRate: number } | null> {
   try {
-    // Use tax rate from first item's product (or default)
-    const taxRate = items.length > 0 ? await getEffectiveTaxRate(items[0].product.id, settings) : (Number(settings.default_tax_rate) || 20);
-    const taxMultiplier = 1 + taxRate / 100;
-    const subtotal = Math.round(total / taxMultiplier);
-    const taxAmount = total - subtotal;
+    // Tax every line at its own product's rate. Using one rate for the whole
+    // basket overcharges or undercharges as soon as tiers are mixed.
+    const summary = summariseTax(
+      lines.map((l) => ({ gross: l.unitPrice * l.quantity, taxRate: l.taxRate }))
+    );
+
+    const taxAmount = Math.round(summary.tax);
+    const subtotal = total - taxAmount;
+    // orders.tax_rate holds a single figure; for a mixed basket record the
+    // effective blended rate so it still reconciles against tax_amount.
+    const taxRate = summary.net > 0 ? Math.round((summary.tax / summary.net) * 100) : 0;
     const address = [
       form.street, form.houseNo, form.apartmentNo,
       form.neighborhood, form.district, form.province,
@@ -272,20 +326,20 @@ async function saveOrder(
         'pending', ${total}, ${subtotal}, ${taxRate}, ${taxAmount},
         ${form.name || ''}, ${form.email || ''}, ${form.phone || ''},
         ${address}, 'pending', ${paymentMethod},
-        ${form.notes || ''}, ${JSON.stringify(items.map(i => ({
-          product_id: i.product.id,
-          name: i.product.name.tr,
-          quantity: i.quantity,
-          unit_price: i.product.priceMin,
+        ${form.notes || ''}, ${JSON.stringify(lines.map(l => ({
+          product_id: l.item.product.id,
+          name: l.item.product.name.tr,
+          quantity: l.quantity,
+          unit_price: l.unitPrice,
         })))}
       ) RETURNING id
     `;
 
     const orderId = rows[0].id;
-    for (const item of items) {
+    for (const line of lines) {
       await pool.sql`
         INSERT INTO order_items (order_id, product_id, quantity, unit_price)
-        VALUES (${orderId}, ${Number(item.product.id) || null}, ${item.quantity}, ${item.product.priceMin})
+        VALUES (${orderId}, ${Number(line.item.product.id) || null}, ${line.quantity}, ${line.unitPrice})
       `;
     }
     return { orderId, taxRate };
@@ -298,22 +352,32 @@ async function saveOrder(
 // ── Main handler ───────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   try {
-    const { form, items, total } = await req.json();
+    const { form, items } = await req.json();
     const settings = await getSettings();
     const gateway = settings.active_gateway || "none";
 
+    // Price the basket from the database and charge that. The total in the
+    // request body is only what the browser believed; it is not authoritative,
+    // and before discounts were applied server-side it was also simply wrong.
+    const lines = await priceBasket(items, settings);
+    const total = basketTotal(lines);
+    const pricedItems: CartItem[] = lines.map((l) => ({
+      ...l.item,
+      product: { ...l.item.product, priceMin: l.unitPrice },
+    }));
+
     let result;
-    if (gateway === "iyzico") result = await payWithIyzico(settings, form, items, total);
-    else if (gateway === "paytr")  result = await payWithPaytr(settings, form, items, total);
-    else if (gateway === "stripe") result = await payWithStripe(settings, items, total);
-    else if (gateway === "paypal") result = await payWithPaypal(settings, items, total);
+    if (gateway === "iyzico") result = await payWithIyzico(settings, form, pricedItems, total);
+    else if (gateway === "paytr")  result = await payWithPaytr(settings, form, pricedItems, total);
+    else if (gateway === "stripe") result = await payWithStripe(settings, pricedItems, total);
+    else if (gateway === "paypal") result = await payWithPaypal(settings, pricedItems, total);
     else result = { success: true, demo: true };
 
     // Save order and trigger cargo notification
     if (result.success) {
-      const saved = await saveOrder(form, items, total, gateway, settings);
+      const saved = await saveOrder(form, lines, total, gateway);
       if (saved) {
-        notifyCargo(saved.orderId, form, items, total, settings).catch(() => {});
+        notifyCargo(saved.orderId, form, pricedItems, total, settings).catch(() => {});
       }
     }
 

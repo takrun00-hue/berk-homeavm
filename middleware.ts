@@ -33,6 +33,7 @@ export const config = {
     "/admin/settings/:path*",
     "/admin/payment/:path*",
     "/admin/cargo/:path*",
+    "/admin/cargo-companies/:path*",
     "/admin/marketing/:path*",
     "/admin/tax/:path*",
   ],

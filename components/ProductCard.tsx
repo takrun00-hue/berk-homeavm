@@ -8,11 +8,13 @@ import { Product } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
+import { productUnitPrice } from "@/lib/pricing";
 
 export default function ProductCard({ product }: { product: Product }) {
   const { locale } = useLanguage();
   const { addToCart } = useCart();
   const [activeVariant, setActiveVariant] = useState<number | null>(null);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
   const variants = product.variants || [];
   const displayImage =
@@ -27,13 +29,16 @@ export default function ProductCard({ product }: { product: Product }) {
     >
       <Link href={`/product/${product.slug}`}>
         <div className="aspect-square bg-gray-100 overflow-hidden">
-          {displayImage ? (
+          {displayImage && !failedImages[displayImage] ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
+              // Keyed on the src so switching colour remounts the element; a
+              // previous load failure must not keep the new image hidden.
+              key={displayImage}
               src={displayImage}
               alt={product.name[locale]}
               className="w-full h-full object-cover transition-all duration-300"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              onError={() => setFailedImages((p) => ({ ...p, [displayImage]: true }))}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300 text-4xl">🛋️</div>
@@ -88,7 +93,7 @@ export default function ProductCard({ product }: { product: Product }) {
               {formatPrice(product.priceMin, locale)} {locale === "tr" ? "₺" : "TRY"}
             </p>
             <p className="text-red-500 font-extrabold text-sm">
-              {formatPrice(Math.round(product.priceMin * (1 - (product.discountPercent ?? 0) / 100)), locale)} {locale === "tr" ? "₺" : "TRY"}
+              {formatPrice(productUnitPrice(product), locale)} {locale === "tr" ? "₺" : "TRY"}
             </p>
           </div>
         ) : (

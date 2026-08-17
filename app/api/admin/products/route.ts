@@ -2,6 +2,7 @@ import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { checkAdmin } from "@/lib/checkAdmin";
 import { syncProducts } from "@/lib/syncProducts";
+import { isTaxTier } from "@/lib/tax";
 
 export async function GET(req: NextRequest) {
   if (!checkAdmin(req))
@@ -36,6 +37,7 @@ export async function POST(req: NextRequest) {
     description_en,
     discount_percent,
     variants,
+    tax_tier,
   } = await req.json();
 
   if (!slug || !name_tr || !name_en || !image) {
@@ -49,11 +51,13 @@ export async function POST(req: NextRequest) {
   const nextOrder = Number(maxOrder.rows[0].m) + 1;
   const discountPct = Math.max(0, Math.min(100, Number(discount_percent) || 0));
   const variantsJson = JSON.stringify(Array.isArray(variants) ? variants : []);
+  // NULL means the product inherits its category's tier.
+  const taxTier = isTaxTier(tax_tier) ? tax_tier : null;
 
   try {
     await pool.sql`
-      INSERT INTO products (slug, name_tr, name_en, category_id, price_min, price_max, image, description_tr, description_en, sort_order, discount_percent, variants)
-      VALUES (${slug}, ${name_tr}, ${name_en}, ${category_id || null}, ${price_min}, ${price_max}, ${image}, ${description_tr || ""}, ${description_en || ""}, ${nextOrder}, ${discountPct}, ${variantsJson})
+      INSERT INTO products (slug, name_tr, name_en, category_id, price_min, price_max, image, description_tr, description_en, sort_order, discount_percent, variants, tax_tier)
+      VALUES (${slug}, ${name_tr}, ${name_en}, ${category_id || null}, ${price_min}, ${price_max}, ${image}, ${description_tr || ""}, ${description_en || ""}, ${nextOrder}, ${discountPct}, ${variantsJson}, ${taxTier})
     `;
     syncProducts();
     return NextResponse.json({ success: true });

@@ -19,6 +19,7 @@ import {
   BarChart2,
   Image,
   Truck,
+  Building2,
   TrendingUp,
   Receipt,
 } from "lucide-react";
@@ -42,6 +43,7 @@ export default function AdminLayout({
     | "adminQR"
     | "adminAnalytics"
     | "adminCargo"
+    | "adminCargoCompanies"
     | "adminMarketing"
     | "adminTax";
 }) {
@@ -84,6 +86,7 @@ export default function AdminLayout({
     { href: "/admin/qr", labelKey: "adminQR" as const, icon: QrCode },
     { href: "/admin/analytics", labelKey: "adminAnalytics" as const, icon: BarChart2 },
     { href: "/admin/cargo", labelKey: "adminCargo" as const, icon: Truck },
+    { href: "/admin/cargo-companies", labelKey: "adminCargoCompanies" as const, icon: Building2 },
     { href: "/admin/marketing", labelKey: "adminMarketing" as const, icon: TrendingUp },
     { href: "/admin/tax", labelKey: "adminTax" as const, icon: Receipt },
   ];

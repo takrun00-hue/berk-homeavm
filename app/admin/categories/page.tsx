@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "@/components/AdminLayout";
 import { useLanguage } from "@/context/LanguageContext";
+import { slugify } from "@/lib/slugify";
 
 const STANDARD_SIZE = 800;
 
@@ -103,7 +104,17 @@ export default function AdminCategoriesPage() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((prev) => {
+      const next = { ...prev, [name]: value };
+      // Keep the slug in step with the Turkish name while it is still the
+      // generated one, so it only has to be touched to override it.
+      if (name === "name_tr" && (!prev.slug || prev.slug === slugify(prev.name_tr))) {
+        next.slug = slugify(value);
+      }
+      if (name === "slug") next.slug = slugify(value);
+      return next;
+    });
   };
 
   const resetForm = () => {

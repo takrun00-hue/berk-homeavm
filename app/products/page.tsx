@@ -6,6 +6,7 @@ import ProductGrid from "@/components/ProductGrid";
 import { useProducts } from "@/lib/useProducts";
 import { useCategories } from "@/lib/useCategories";
 import { useLanguage } from "@/context/LanguageContext";
+import { normalizeSlug } from "@/lib/slugify";
 import Link from "next/link";
 
 function ProductsContent() {
@@ -15,13 +16,19 @@ function ProductsContent() {
   const { categories, loading: categoriesLoading } = useCategories();
   const { locale, t } = useLanguage();
 
-  const activeCat = categorySlug ? categories.find((c) => c.slug === categorySlug) : null;
+  // Compare slugs normalised: rows created before slugs were generated can
+  // carry stray whitespace or casing, and the URL parser drops a trailing
+  // space from the href, so a raw === would not match them.
+  const wanted = normalizeSlug(categorySlug);
+  const activeCat = categorySlug
+    ? categories.find((c) => normalizeSlug(c.slug) === wanted)
+    : null;
   const filtered = categorySlug
     ? products.filter((p) => {
         // Primary: match by DB category ID (most reliable)
         if (activeCat && p.categoryId) return p.categoryId === activeCat.id;
         // Secondary: match by category slug on product
-        if (p.categorySlug) return p.categorySlug === categorySlug;
+        if (p.categorySlug) return normalizeSlug(p.categorySlug) === wanted;
         // Fallback: match by category name text
         if (activeCat) return p.category.tr === activeCat.name.tr || p.category.en === activeCat.name.en;
         return false;

@@ -4,6 +4,7 @@ import { formatPrice } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
 import { useProducts } from "@/lib/useProducts";
+import { productUnitPrice } from "@/lib/pricing";
 import { useState } from "react";
 
 export default function ProductDetailPage({
@@ -16,6 +17,7 @@ export default function ProductDetailPage({
   const { products, loading } = useProducts();
   const [added, setAdded] = useState(false);
   const [selectedVariantIdx, setSelectedVariantIdx] = useState<number | null>(null);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
   const product = products.find((p) => p.slug === decodeURIComponent(params.slug));
 
@@ -47,22 +49,27 @@ export default function ProductDetailPage({
       ? product.variants[selectedVariantIdx].image
       : product.image;
 
+  // Tracked per URL so one broken image does not blank out the others.
+  const imageFailed = !!failedImages[displayImage];
+  const setImageFailed = (failed: boolean) =>
+    setFailedImages((prev) => ({ ...prev, [displayImage]: failed }));
+
   const discountPct = product.discountPercent ?? 0;
-  const discountedPrice =
-    discountPct > 0
-      ? Math.round(product.priceMin * (1 - discountPct / 100))
-      : null;
+  const discountedPrice = discountPct > 0 ? productUnitPrice(product) : null;
 
   return (
     <section className="py-10 px-4 max-w-3xl mx-auto space-y-6">
       <div className="aspect-square rounded-md overflow-hidden bg-gray-100">
-        {displayImage ? (
+        {displayImage && !imageFailed ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
+            // Keyed on the src so switching colour remounts the element; a
+            // previous load failure must not keep the new image hidden.
+            key={displayImage}
             src={displayImage}
             alt={product.name[locale]}
             className="w-full h-full object-cover transition-opacity duration-300"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+            onError={() => setImageFailed(true)}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-300 text-6xl">🛋️</div>
