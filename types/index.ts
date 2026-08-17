@@ -24,6 +24,8 @@ export interface Product {
   variants?: ColorVariant[];
   /** Effective VAT percentage, resolved product → category → standard tier. */
   taxRate?: number;
+  /** Units in stock. null means stock is not tracked for this product. */
+  stock?: number | null;
 }
 
 export interface Category {

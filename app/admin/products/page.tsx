@@ -42,6 +42,8 @@ interface Prod {
   variants: ColorVariant[];
   /** Empty means "inherit the category's tier". */
   tax_tier: string | null;
+  /** null means stock is not tracked. */
+  stock: number | null;
 }
 
 const emptyForm = {
@@ -55,6 +57,7 @@ const emptyForm = {
   description_en: "",
   discount_percent: "0",
   tax_tier: "",
+  stock: "",
 };
 
 const emptyVariant: ColorVariant = { name: "", hex: "#000000", image: "" };
@@ -109,7 +112,9 @@ export default function AdminProductsPage() {
   };
 
   useEffect(() => {
-    load();
+    // Ensure the stock column (and other migrations) exist before the form
+    // saves a product that references it, then load.
+    fetch("/api/admin/migrate").catch(() => {}).finally(load);
   }, []);
 
   const resizeToBlob = (file: File): Promise<Blob> => {
@@ -260,6 +265,8 @@ export default function AdminProductsPage() {
       discount_percent: Number(form.discount_percent) || 0,
       variants: variants.filter((v) => v.name && v.image),
       tax_tier: form.tax_tier || null,
+      // Empty field means untracked (null); a number is the tracked count.
+      stock: form.stock === "" ? null : Number(form.stock),
     };
 
     const url = editingId
@@ -295,6 +302,7 @@ export default function AdminProductsPage() {
       description_en: p.description_en || "",
       discount_percent: String(p.discount_percent || 0),
       tax_tier: p.tax_tier || "",
+      stock: p.stock === null || p.stock === undefined ? "" : String(p.stock),
     });
     setVariants(Array.isArray(p.variants) ? p.variants : []);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -436,6 +444,22 @@ export default function AdminProductsPage() {
             {Number(form.discount_percent) > 0 && (
               <span className="text-xs text-green-600 font-bold">%{form.discount_percent} indirim</span>
             )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-gray-600 whitespace-nowrap">Stok Adedi:</label>
+            <input
+              name="stock"
+              type="number"
+              min={0}
+              placeholder="Sınırsız"
+              value={form.stock}
+              onChange={handleChange}
+              className="w-28 border rounded-md px-3 py-2 text-sm"
+            />
+            <span className="text-xs text-gray-400">
+              {form.stock === "" ? "boş = takip edilmez" : `müşteri "${form.stock} adet" görür`}
+            </span>
           </div>
 
           <div className="space-y-2">

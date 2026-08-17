@@ -78,7 +78,7 @@ export async function GET() {
         SELECT p.id, p.slug, p.name_tr, p.name_en, p.price_min, p.price_max,
                p.image, p.description_tr, p.description_en,
                COALESCE(p.discount_percent, 0) as discount_percent,
-               COALESCE(p.variants, '[]') as variants,
+               COALESCE(p.variants, '[]') as variants, p.stock,
                p.category_id, p.tax_tier as product_tax_tier,
                c.name_tr as cat_tr, c.name_en as cat_en, c.slug as cat_slug,
                c.tax_tier as cat_tax_tier
@@ -124,6 +124,8 @@ export async function GET() {
         discountPercent: Number(r.discount_percent) || 0,
         variants,
         taxRate: effectiveTaxRate(r.product_tax_tier, r.cat_tax_tier, taxRates),
+        // NULL stays null (untracked); a number is coerced to an integer count.
+        stock: r.stock === null || r.stock === undefined ? null : Number(r.stock),
       };
     });
 

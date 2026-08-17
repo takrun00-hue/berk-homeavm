@@ -24,12 +24,18 @@ export async function PUT(
     discount_percent,
     variants,
     tax_tier,
+    stock,
   } = await req.json();
 
   const discountPct = Math.max(0, Math.min(100, Number(discount_percent) || 0));
   const variantsJson = JSON.stringify(Array.isArray(variants) ? variants : []);
   // NULL means the product inherits its category's tier.
   const taxTier = isTaxTier(tax_tier) ? tax_tier : null;
+  // NULL means stock is not tracked; a number is clamped to a non-negative int.
+  const stockCount =
+    stock === null || stock === undefined || stock === ""
+      ? null
+      : Math.max(0, Math.floor(Number(stock)) || 0);
 
   await pool.sql`
     UPDATE products SET
@@ -44,7 +50,8 @@ export async function PUT(
       description_en = ${description_en || ""},
       discount_percent = ${discountPct},
       variants = ${variantsJson},
-      tax_tier = ${taxTier}
+      tax_tier = ${taxTier},
+      stock = ${stockCount}
     WHERE id = ${params.id}
   `;
 

@@ -23,6 +23,7 @@ export default function ProductDetailPage({
 
   const handleAdd = () => {
     if (!product) return;
+    if (product.stock === 0) return; // sold out
     addToCart(product);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
@@ -136,11 +137,29 @@ export default function ProductDetailPage({
           </p>
         )}
         <p className="text-gray-600 text-sm">{product.description[locale]}</p>
+        {/* Stock is shown only when the admin tracks it (stock is a number).
+            0 means sold out and blocks adding to the cart. */}
+        {typeof product.stock === "number" && (
+          product.stock > 0 ? (
+            <p className="text-sm font-semibold text-green-600">
+              {locale === "tr"
+                ? `Stokta ${product.stock} adet`
+                : `${product.stock} in stock`}
+            </p>
+          ) : (
+            <p className="text-sm font-bold text-red-500">
+              {locale === "tr" ? "Tükendi" : "Out of stock"}
+            </p>
+          )
+        )}
         <button
           onClick={handleAdd}
-          className="bg-black text-gold px-6 py-3 rounded-md font-bold mt-4"
+          disabled={product.stock === 0}
+          className="bg-black text-gold px-6 py-3 rounded-md font-bold mt-4 disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {added ? "✓" : t("addToCart")}
+          {product.stock === 0
+            ? locale === "tr" ? "Tükendi" : "Out of stock"
+            : added ? "✓" : t("addToCart")}
         </button>
       </div>
     </section>
