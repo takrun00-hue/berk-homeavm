@@ -1,6 +1,7 @@
 import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { checkAdmin } from "@/lib/checkAdmin";
+import { sendDailyReportToTelegram, sendTelegramAlert } from "@/lib/telegram";
 
 export async function POST(req: NextRequest) {
   if (!checkAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -27,47 +28,44 @@ export async function POST(req: NextRequest) {
     }
 
     const report = rows[0];
-    const messageId = `report-${reportDate}-${businessName}`;
-
-    // Simulate sending (in production, integrate with Telegram/Email/Slack)
     const results: Record<string, any> = {};
 
     if (method === "telegram" || method === "all") {
-      // TODO: Integrate with Telegram Bot API
-      console.log("[TELEGRAM]", report.report_content);
-      results.telegram = {
-        success: true,
-        message: "Report sent to Telegram (simulated)",
-        messageId,
-      };
+      const tgResult = await sendDailyReportToTelegram(
+        businessName,
+        report.report_content,
+        report.status
+      );
+      results.telegram = tgResult.success
+        ? { success: true, messageId: tgResult.messageId }
+        : { success: false, error: tgResult.error };
     }
 
     if (method === "email" || method === "all") {
-      // TODO: Integrate with Email Service (SendGrid, Mailgun, etc.)
-      console.log("[EMAIL]", report.report_content);
       results.email = {
-        success: true,
-        message: "Report sent to email (simulated)",
+        success: false,
+        message: "Email integration coming soon",
         recipient: "msn.necoo@gmail.com",
       };
     }
 
     if (method === "log" || method === "all") {
-      results.log = {
-        success: true,
-        message: "Report logged to database",
-      };
+      console.log(`[DAILY REPORT] ${businessName} (${reportDate}):\n${report.report_content}`);
+      results.log = { success: true, message: "Report logged to database" };
     }
 
-    // Mark as sent
-    await pool.sql`
-      UPDATE admin_reports
-      SET sent_to_user = TRUE, sent_at = CURRENT_TIMESTAMP
-      WHERE report_date = ${reportDate} AND business_name = ${businessName}
-    `;
+    // Mark as sent (only if at least one method succeeded)
+    const hasSent = Object.values(results).some((r: any) => r.success);
+    if (hasSent) {
+      await pool.sql`
+        UPDATE admin_reports
+        SET sent_to_user = TRUE, sent_at = CURRENT_TIMESTAMP
+        WHERE report_date = ${reportDate} AND business_name = ${businessName}
+      `;
+    }
 
     return NextResponse.json({
-      success: true,
+      success: hasSent,
       report: {
         date: report.report_date,
         business: report.business_name,
@@ -81,3 +79,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to send report" }, { status: 500 });
   }
 }
+
